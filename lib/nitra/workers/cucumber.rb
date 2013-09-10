@@ -1,7 +1,17 @@
 module Nitra::Workers
   class Cucumber < Worker
-    def self.files
-      Dir["features/**/*.feature"].sort_by {|f| File.size(f)}.reverse
+    def self.files(configuration)
+      if configuration.split_files
+        results = []
+        Dir["features/**/*.feature"].each do |f|
+          File.read(f).split(/\n/).each_with_index do |line, index|
+            results << "#{f}:#{index + 1}" if line =~ /^\s*Scenarios?\s*:/
+          end
+        end
+        results
+      else
+        Dir["features/**/*.feature"].sort_by {|f| File.size(f)}.reverse
+      end
     end
 
     def self.filename_match?(filename)

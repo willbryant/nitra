@@ -101,7 +101,7 @@ class Nitra::Master
 
   def load_files_from_framework_list
     @files = frameworks.inject({}) do |result, framework_name|
-      result[framework_name] = Nitra::Workers::Worker.worker_classes[framework_name].files
+      result[framework_name] = Nitra::Workers::Worker.worker_classes[framework_name].files(@configuration)
       result
     end
   end

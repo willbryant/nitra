@@ -18,6 +18,10 @@ module Nitra
           configuration.add_framework "cucumber"
         end
 
+        opts.on("--split-files", "Attempt to split the scenarios in cucumber files so they can run in parallel") do
+          configuration.split_files = true
+        end
+
         opts.on("--debug", "Print debug output") do
           configuration.debug = true
         end
