@@ -171,13 +171,7 @@ module Nitra
           exit!  # at_exit hooks will be run in the parent.
         end
         wr.close
-        output = ""
-        loop do
-          IO.select([rd])
-          text = rd.read
-          break if text.nil? || text.length.zero?
-          output.concat text
-        end
+        output = rd.read
         rd.close
         Process.wait(@forked_worker_pid) if @forked_worker_pid
 
