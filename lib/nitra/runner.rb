@@ -91,7 +91,7 @@ class Nitra::Runner
         end
 
         case data['command']
-        when "debug", "stdout", "stderr", "error"
+        when "debug", "stdout", "stderr", "error", "retry"
           server_channel.write(data)
 
         when "result"
@@ -99,6 +99,9 @@ class Nitra::Runner
 
         when "ready"
           handle_ready(data, worker_channel)
+
+        else
+          puts "Unrecognised nitra command to runner #{data["command"]}"
         end
       end
     end

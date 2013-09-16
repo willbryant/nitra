@@ -2,7 +2,7 @@ require 'nitra/utils'
 
 module Nitra
   class Configuration
-    attr_accessor :debug, :quiet, :print_failures, :rake_tasks
+    attr_accessor :debug, :quiet, :print_failures, :rake_tasks, :exceptions_to_retry, :max_attempts
     attr_accessor :process_count, :environment, :slaves, :slave_mode, :framework, :frameworks
 
     def initialize
@@ -10,6 +10,7 @@ module Nitra
       self.slaves = []
       self.rake_tasks = {}
       self.frameworks = []
+      self.max_attempts = 5
       calculate_default_process_count
     end
 

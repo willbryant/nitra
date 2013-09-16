@@ -74,6 +74,12 @@ class Nitra::Master
 
           when "stderr"
             puts "STDERR for #{data["process"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
+
+          when "retry"
+            puts "Re-running #{data["filename"]} on worker #{data["on"]}"
+
+          else
+            puts "Unrecognised nitra command to master #{data["command"]}"
           end
         else
           runners.delete channel

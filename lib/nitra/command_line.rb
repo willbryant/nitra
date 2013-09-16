@@ -62,6 +62,18 @@ module Nitra
           configuration.environment = env
         end
 
+        opts.on("--retry EXCEPTION", String, "Retry tests that fail with the given exception, which can be a plain string or a /regex/.") do |exception|
+          if exception[0] == '/' && exception[-1] == '/'
+            configuration.exceptions_to_retry = Regexp.new(exception)
+          else
+            configuration.exceptions_to_retry = Regexp.new(Regexp.escape(exception))
+          end
+        end
+
+        opts.on("--attempts N", Integer, "Maximum number of times to try tests that fail with the --retry exceptions") do |max_attempts|
+          configuration.max_attempts = max_attempts
+        end
+
         opts.on_tail("-h", "--help", "Show this message") do
           puts opts
           exit
