@@ -24,6 +24,8 @@ module Nitra
         end
       end
 
+      class RetryException < Exception; end
+
 
       attr_reader :runner_id, :worker_number, :configuration, :channel, :io
 

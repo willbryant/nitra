@@ -34,11 +34,23 @@ module Nitra::Workers
     # Doesn't write back to the runner if we mark the run as preloading.
     #
     def run_file(filename, preloading = false)
+      attempt = 1
       begin
         result = RSpec::Core::CommandLine.new(["-f", "p", filename]).run(io, io)
+
+        if result.to_i != 0 && @configuration.exceptions_to_retry && attempt < @configuration.max_attempts &&
+           io.string =~ @configuration.exceptions_to_retry
+          raise RetryException
+        end
       rescue LoadError => e
         io << "\nCould not load file #{filename}: #{e.message}\n\n"
         result = 1
+      rescue RetryException
+        channel.write("command" => "retry", "filename" => filename, "on" => "#{runner_id}:#{worker_number}")
+        attempt += 1
+        clean_up
+        io.string = ""
+        retry
       rescue Exception => e
         io << "Exception when running #{filename}: #{e.message}"
         io << e.backtrace[0..7].join("\n")
