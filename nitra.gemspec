@@ -16,7 +16,7 @@ spec = Gem::Specification.new do |s|
   s.test_files = `git ls-files -- {spec,features}/*`.split("\n")
 
   s.add_dependency('cucumber', '>= 1.1.9')
-  s.add_dependency('rspec', '~> 2.12')
+  s.add_dependency('rspec')
 
   s.has_rdoc = false
 end

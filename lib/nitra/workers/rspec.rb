@@ -36,7 +36,13 @@ module Nitra::Workers
     def run_file(filename, preloading = false)
       attempt = 1
       begin
-        result = RSpec::Core::CommandLine.new(["-f", "p", filename]).run(io, io)
+        args = ["-f", "p", filename]
+        if RSpec::Core::const_defined?(:CommandLine)
+          runner = RSpec::Core::CommandLine.new(args)
+        else
+          runner = RSpec::Core::Runner.new(RSpec::Core::ConfigurationOptions.new(args))
+        end
+        result = runner.run(io, io)
 
         if result.to_i != 0 && @configuration.exceptions_to_retry && attempt < @configuration.max_attempts &&
            io.string =~ @configuration.exceptions_to_retry
