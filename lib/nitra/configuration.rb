@@ -6,7 +6,7 @@ module Nitra
     attr_accessor :process_count, :environment, :slaves, :slave_mode, :framework, :frameworks
 
     def initialize
-      self.environment = "nitra"
+      self.environment = "test"
       self.slaves = []
       self.rake_tasks = {}
       self.frameworks = []

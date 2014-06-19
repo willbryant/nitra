@@ -50,8 +50,8 @@ describe Nitra::CommandLine do
 
     describe "-e" do
       it "sets the rails environment" do
-        config.expect(:environment=, nil, ["test"])
-        Nitra::CommandLine.new(config, ["-e", "test"])
+        config.expect(:environment=, nil, ["foo"])
+        Nitra::CommandLine.new(config, ["-e", "foo"])
         config.verify
       end
     end
