@@ -70,19 +70,19 @@ module Nitra
 
       protected
       def load_environment
-        raise 'Subclasses must impliment this method.'
+        raise 'Subclasses must implement this method.'
       end
 
       def minimal_file
-        raise 'Subclasses must impliment this method.'
+        raise 'Subclasses must implement this method.'
       end
 
       def run_file(filename, preload = false)
-        raise 'Subclasses must impliment this method.'
+        raise 'Subclasses must implement this method.'
       end
 
       def clean_up
-        raise 'Subclasses must impliment this method.'
+        raise 'Subclasses must implement this method.'
       end
 
       def run
