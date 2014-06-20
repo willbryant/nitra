@@ -63,9 +63,7 @@ class Nitra::Master
             runners.delete channel
 
           when "debug"
-            if configuration.debug
-              puts "[DEBUG] #{data["text"]}"
-            end
+            debug "[DEBUG] #{data["text"]}"
 
           when "stdout"
             if configuration.debug
@@ -77,6 +75,17 @@ class Nitra::Master
 
           when "retry"
             puts "Re-running #{data["filename"]} on worker #{data["on"]}"
+
+          when "slave_configuration"
+            slave_details = slave.slave_details_by_server.fetch(channel)
+            slave_config = configuration.dup
+            slave_config.process_count = slave_details.fetch(:cpus)
+
+            debug "Configuring slave runner #{slave_details[:runner_id]}"
+            channel.write(
+              "command" => "configuration",
+              "runner_id" => slave_details.fetch(:runner_id),
+              "configuration" => slave_config)
 
           else
             puts "Unrecognised nitra command to master #{data["command"]}"

@@ -1,33 +1,31 @@
 module Nitra::Slave
   class Client
-    attr_reader :configuration
+    attr_reader :configuration, :slave_details_by_server
 
     def initialize(configuration)
       @configuration = configuration
+      @slave_details_by_server = {}
     end
 
     ##
-    # Starts the slave runners.
+    # Starts the slave runners in forked processes.
     #
-    # We do this in two steps, starts them all and then sends them their configurations.
-    # This extra complexity speeds up the initial startup when working with many slaves.
+    # The slaves will request their configuration in parallel, to minimize startup time.
     #
     def connect
       runner_id = "A"
       @configuration.slaves.collect do |slave_details|
         runner_id = runner_id.succ
-        server = start_host(slave_details, runner_id)
-        [server, slave_details, runner_id]
-      end.collect do |server, slave_details, runner_id|
-        configure_host(server, slave_details, runner_id)
-      end.compact
+        start_host(slave_details.merge(:runner_id => runner_id))
+      end
     end
 
     protected
-    def start_host(slave_details, runner_id)
+    def start_host(slave_details)
       client, server = Nitra::Channel.pipe
 
-      puts "Starting slave runner #{runner_id} with command '#{slave_details[:command]}'" if configuration.debug
+      puts "Starting slave runner #{slave_details[:runner_id]} with command '#{slave_details[:command]}'" if configuration.debug
+      slave_details_by_server[server] = slave_details
 
       pid = fork do
         server.close
@@ -39,26 +37,6 @@ module Nitra::Slave
       client.close
       server
     end
-
-    def configure_host(server, slave_details, runner_id)
-      slave_config = configuration.dup
-      slave_config.process_count = slave_details.fetch(:cpus)
-
-      server.write(
-        "command" => "configuration",
-        "runner_id" => runner_id,
-        "configuration" => slave_config)
-      response = server.read
-
-      if response["command"] == "connected"
-        puts "Connection to slave runner #{runner_id} successful" if configuration.debug
-        server
-      else
-        $stderr.concat "Connection to slave runner #{runner_id} FAILED with message: #{response.inspect}"
-        Process.kill("KILL", pid)
-        nil
-      end
-    end
   end
 
   class Server
@@ -67,13 +45,13 @@ module Nitra::Slave
     def run
       @channel = Nitra::Channel.new($stdin, $stdout)
 
+      @channel.write("command" => "slave_configuration")
+
       response = @channel.read
       unless response && response["command"] == "configuration"
         puts "handshake failed"
         exit 1
       end
-
-      @channel.write("command" => "connected")
 
       runner = Nitra::Runner.new(response["configuration"], channel, response["runner_id"])
 
