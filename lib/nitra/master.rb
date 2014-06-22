@@ -58,7 +58,7 @@ class Nitra::Master
             formatter.print_progress
 
           when "error"
-            progress.fail("ERROR " + data["process"] + " " + data["text"])
+            progress.fail("ERROR on #{data["on"]} #{data["process"]} #{data["text"]}")
             formatter.progress
             runners.delete channel
 
@@ -67,21 +67,21 @@ class Nitra::Master
 
           when "stdout"
             if configuration.debug
-              puts "STDOUT for #{data["process"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
+              puts "STDOUT for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
             end
 
           when "stderr"
-            puts "STDERR for #{data["process"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
+            puts "STDERR for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
 
           when "retry"
-            puts "Re-running #{data["filename"]} on worker #{data["on"]}"
+            puts "Re-running #{data["filename"]} on #{data["on"]}"
 
           when "slave_configuration"
             slave_details = slave.slave_details_by_server.fetch(channel)
             slave_config = configuration.dup
             slave_config.process_count = slave_details.fetch(:cpus)
 
-            debug "Configuring slave runner #{data["runner_id"]}"
+            debug "Configuring slave runner #{data["on"]}"
             channel.write(
               "command" => "configuration",
               "configuration" => slave_config)

@@ -44,7 +44,7 @@ module Nitra::Slave
       @runner_id = Socket.gethostname
 
       @channel = Nitra::Channel.new($stdin, $stdout)
-      @channel.write("command" => "slave_configuration", "runner_id" => @runner_id)
+      @channel.write("command" => "slave_configuration", "on" => @runner_id)
 
       response = @channel.read
       unless response && response["command"] == "configuration"

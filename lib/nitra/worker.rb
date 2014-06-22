@@ -56,11 +56,7 @@ module Nitra
 
           server.close
           @channel = client
-          begin
-            run
-          rescue => e
-            channel.write("command" => "error", "process" => "init framework", "text" => e.message, "worker_number" => worker_number)
-          end
+          run
         end
 
         client.close
@@ -87,11 +83,11 @@ module Nitra
 
       def run
         trap("SIGTERM") do
-          channel.write("command" => "error", "process" => "trap", "text" => 'Received SIGTERM', "worker_number" => worker_number)
+          channel.write("command" => "error", "process" => "trap", "text" => 'Received SIGTERM', "on" => on)
           Process.kill("SIGKILL", Process.pid)
         end
         trap("SIGINT") do
-          channel.write("command" => "error", "process" => "trap", "text" => 'Received SIGINT', "worker_number" => worker_number)
+          channel.write("command" => "error", "process" => "trap", "text" => 'Received SIGINT', "on" => on)
           Process.kill("SIGKILL", Process.pid) 
         end
 
@@ -115,6 +111,12 @@ module Nitra
             process_file(filename)
           end
         end
+      rescue => e
+        channel.write("command" => "error", "process" => "init framework", "text" => e.message, "on" => on)
+      end
+
+      def on
+        "#{runner_id}:#{worker_number}"
       end
 
       def preload_framework
@@ -129,7 +131,7 @@ module Nitra
             run_file(file.path, true)
           end
 
-          channel.write("command" => "stdout", "process" => "init framework", "text" => output, "worker_number" => worker_number) unless output.empty?
+          channel.write("command" => "stdout", "process" => "init framework", "text" => output, "on" => on) unless output.empty?
         ensure
           file.close unless file.closed?
           file.unlink
@@ -183,8 +185,8 @@ module Nitra
         @forked_worker_pid = nil
 
         end_time = Time.now
-        channel.write("command" => "stdout", "process" => "test framework", "filename" => filename, "text" => stdout_text, "worker_number" => worker_number) unless stdout_text.empty?
-        channel.write("command" => "stderr", "process" => "test framework", "filename" => filename, "text" => stderr_text, "worker_number" => worker_number) unless stderr_text.empty?
+        channel.write("command" => "stdout", "process" => "test framework", "filename" => filename, "text" => stdout_text, "on" => on) unless stdout_text.empty?
+        channel.write("command" => "stderr", "process" => "test framework", "filename" => filename, "text" => stderr_text, "on" => on) unless stderr_text.empty?
         debug "#{filename} processed in #{'%0.2f' % (end_time - start_time)}s"
       end
 
@@ -203,7 +205,7 @@ module Nitra
       #
       def debug(*text)
         if configuration.debug
-          channel.write("command" => "debug", "text" => "worker #{runner_id}:#{worker_number}: #{text.join}", "worker_number" => worker_number)
+          channel.write("command" => "debug", "text" => text.join, "on" => on)
         end
       end
     end

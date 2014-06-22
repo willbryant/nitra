@@ -52,7 +52,7 @@ module Nitra::Workers
         io << "\nCould not load file #{filename}: #{e.message}\n\n"
         result = 1
       rescue RetryException
-        channel.write("command" => "retry", "filename" => filename, "on" => "#{runner_id}:#{worker_number}")
+        channel.write("command" => "retry", "filename" => filename, "on" => on)
         attempt += 1
         clean_up
         io.string = ""

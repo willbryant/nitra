@@ -54,7 +54,7 @@ module Nitra::Workers
         debug "load error"
         io << "\nCould not load file #{filename}: #{e.message}\n\n"
       rescue RetryException
-        channel.write("command" => "retry", "filename" => filename, "on" => "#{runner_id}:#{worker_number}")
+        channel.write("command" => "retry", "filename" => filename, "on" => on)
         attempt += 1
         cuke_runtime.reset
         io.string = ""

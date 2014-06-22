@@ -32,6 +32,8 @@ class Nitra::Runner
     hand_out_files_to_workers
 
     tasks.run(:after_runner)
+  rescue => e
+    server_channel.write("command" => "error", "process" => "runner", "text" => e.message, "on" => runner_id)
   rescue Errno::EPIPE
   ensure
     trap("SIGTERM", "DEFAULT")
@@ -40,7 +42,7 @@ class Nitra::Runner
 
   def debug(*text)
     if configuration.debug
-      server_channel.write("command" => "debug", "text" => "runner #{runner_id}: #{text.join}")
+      server_channel.write("command" => "debug", "text" => text.join, "on" => runner_id)
     end
   end
 
@@ -58,7 +60,7 @@ class Nitra::Runner
       ActiveRecord::Base.connection.disconnect!
     end
 
-    server_channel.write("command" => "stdout", "process" => "rails initialisation", "text" => output)
+    server_channel.write("command" => "stdout", "process" => "rails initialisation", "text" => output, "on" => runner_id)
   end
 
   def start_workers
@@ -101,7 +103,7 @@ class Nitra::Runner
           handle_ready(data, worker_channel)
 
         else
-          puts "Unrecognised nitra command to runner #{data["command"]}"
+          raise "Unrecognised nitra command to runner #{data["command"]}"
         end
       end
     end
