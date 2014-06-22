@@ -179,8 +179,9 @@ module Nitra
         end
         stdout_pipe[1].close
         stderr_pipe[1].close
-        stdout_text = stdout_pipe[0].read
-        stderr_text = stderr_pipe[0].read
+        stdout_text, stderr_text = read_all_descriptors(stdout_pipe[0], stderr_pipe[0])
+        stdout_pipe[0].close
+        stderr_pipe[0].close
         Process.wait(@forked_worker_pid) if @forked_worker_pid
         @forked_worker_pid = nil
 
@@ -188,6 +189,24 @@ module Nitra
         channel.write("command" => "stdout", "process" => "test framework", "filename" => filename, "text" => stdout_text, "on" => on) unless stdout_text.empty?
         channel.write("command" => "stderr", "process" => "test framework", "filename" => filename, "text" => stderr_text, "on" => on) unless stderr_text.empty?
         debug "#{filename} processed in #{'%0.2f' % (end_time - start_time)}s"
+      end
+
+      def read_all_descriptors(*descriptors)
+        output = descriptors.collect { "" }
+        active = descriptors.collect { true }
+        while active.any? do
+          descriptors.each_with_index do |fd, index|
+            begin
+              output[index] << fd.read_nonblock(65536) if active[index]
+            rescue IO::WaitReadable
+              # no new data on this descriptor yet
+            rescue EOFError
+              active[index] = false
+            end
+          end
+          IO.select(descriptors)
+        end
+        output
       end
 
 
