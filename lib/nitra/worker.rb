@@ -203,7 +203,7 @@ module Nitra
       #
       def debug(*text)
         if configuration.debug
-          channel.write("command" => "debug", "text" => "worker #{runner_id}.#{worker_number}: #{text.join}", "worker_number" => worker_number)
+          channel.write("command" => "debug", "text" => "worker #{runner_id}:#{worker_number}: #{text.join}", "worker_number" => worker_number)
         end
       end
     end
