@@ -26,7 +26,7 @@ class Nitra::Master
       client, runner = Nitra::Channel.pipe
       fork do
         runner.close
-        Nitra::Runner.new(configuration, client, "A").run
+        Nitra::Runner.new(configuration, client, "local").run
       end
       client.close
       runners << runner
@@ -81,10 +81,9 @@ class Nitra::Master
             slave_config = configuration.dup
             slave_config.process_count = slave_details.fetch(:cpus)
 
-            debug "Configuring slave runner #{slave_details[:runner_id]}"
+            debug "Configuring slave runner #{data["runner_id"]}"
             channel.write(
               "command" => "configuration",
-              "runner_id" => slave_details.fetch(:runner_id),
               "configuration" => slave_config)
 
           else

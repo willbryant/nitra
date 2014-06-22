@@ -13,10 +13,8 @@ module Nitra::Slave
     # The slaves will request their configuration in parallel, to minimize startup time.
     #
     def connect
-      runner_id = "@" # followed by A
       @configuration.slaves.collect do |slave_details|
-        runner_id = runner_id.succ
-        start_host(slave_details.merge(:runner_id => runner_id))
+        start_host(slave_details)
       end
     end
 
@@ -24,7 +22,7 @@ module Nitra::Slave
     def start_host(slave_details)
       client, server = Nitra::Channel.pipe
 
-      puts "Starting slave runner #{slave_details[:runner_id]} with command '#{slave_details[:command]}'" if configuration.debug
+      puts "Starting slave runner with command '#{slave_details[:command]}'" if configuration.debug
       slave_details_by_server[server] = slave_details
 
       pid = fork do
@@ -40,12 +38,13 @@ module Nitra::Slave
   end
 
   class Server
-    attr_reader :channel
+    attr_reader :channel, :runner_id
 
     def run
-      @channel = Nitra::Channel.new($stdin, $stdout)
+      @runner_id = Socket.gethostname
 
-      @channel.write("command" => "slave_configuration")
+      @channel = Nitra::Channel.new($stdin, $stdout)
+      @channel.write("command" => "slave_configuration", "runner_id" => @runner_id)
 
       response = @channel.read
       unless response && response["command"] == "configuration"
@@ -53,7 +52,7 @@ module Nitra::Slave
         exit 1
       end
 
-      runner = Nitra::Runner.new(response["configuration"], channel, response["runner_id"])
+      runner = Nitra::Runner.new(response["configuration"], channel, @runner_id)
 
       runner.run
     end
