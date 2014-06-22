@@ -58,30 +58,28 @@ class Nitra::Master
             formatter.print_progress
 
           when "error"
-            progress.fail("ERROR on #{data["on"]} #{data["process"]} #{data["text"]}")
+            say_lines(data["text"], "#{data["on"]} [ERROR for #{data["process"]}] ")
             formatter.progress
             runners.delete channel
 
           when "debug"
-            debug "[DEBUG] #{data["text"]}"
+            say_lines(data["text"], "#{data["on"]} [DEBUG] ") if configuration.debug
 
           when "stdout"
-            if configuration.debug
-              say "STDOUT for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
-            end
+            say_lines(data["text"], "#{data["on"]} [STDOUT for #{data["process"]}] ") if configuration.debug
 
           when "stderr"
-            say "STDERR for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
+            say_lines(data["text"], "#{data["on"]} [STDERR for #{data["process"]}] ")
 
           when "retry"
-            say "Re-running #{data["filename"]} on #{data["on"]}"
+            say "#{data["on"]} Re-running #{data["filename"]}"
 
           when "slave_configuration"
             slave_details = slave.slave_details_by_server.fetch(channel)
             slave_config = configuration.dup
             slave_config.process_count = slave_details.fetch(:cpus)
 
-            debug "Configuring slave runner #{data["on"]}"
+            debug "#{data["on"]} Slave runner configuration requested"
             channel.write(
               "command" => "configuration",
               "configuration" => slave_config)
@@ -109,8 +107,13 @@ class Nitra::Master
     $stdout.flush
   end
 
+  def say_lines(text, prefix)
+    text.split(/\n/).each {|line| puts "#{prefix}#{line}"}
+    $stdout.flush
+  end
+
   def debug(*text)
-    say "master: #{text.join}" if configuration.debug
+    say "master: [DEBUG] #{text.join}" if configuration.debug
   end
 
   def map_files_to_frameworks(files)
