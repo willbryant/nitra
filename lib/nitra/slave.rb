@@ -13,7 +13,7 @@ module Nitra::Slave
     # The slaves will request their configuration in parallel, to minimize startup time.
     #
     def connect
-      runner_id = "A"
+      runner_id = "@" # followed by A
       @configuration.slaves.collect do |slave_details|
         runner_id = runner_id.succ
         start_host(slave_details.merge(:runner_id => runner_id))
