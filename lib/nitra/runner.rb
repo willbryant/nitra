@@ -20,8 +20,6 @@ class Nitra::Runner
   def run
     tasks.run(:before_runner)
 
-    load_rails_environment
-
     tasks.run(:before_worker, configuration.process_count)
 
     start_workers
@@ -48,21 +46,6 @@ class Nitra::Runner
   end
 
   protected
-
-  def load_rails_environment
-    return unless File.file?('config/application.rb')
-    debug "Loading rails environment..."
-
-    ENV["TEST_ENV_NUMBER"] = "1"
-
-    output = Nitra::Utils.capture_output do
-      require './config/application'
-      Rails.application.require_environment!
-      ActiveRecord::Base.connection.disconnect!
-    end
-
-    server_channel.write("command" => "stdout", "process" => "rails initialisation", "text" => output, "on" => runner_id)
-  end
 
   def start_workers
     (1..configuration.process_count).collect do |index|

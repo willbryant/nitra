@@ -16,7 +16,7 @@ module Nitra
 
     def self.reset_cache
       return unless defined?(Rails)
-      Rails.cache.reset if Rails.cache.respond_to?(:reset)
+      Rails.cache.reset if defined?(RAILS_CACHE) && Rails.cache.respond_to?(:reset)
     end
   end
 end
