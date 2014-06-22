@@ -112,7 +112,7 @@ module Nitra
           end
         end
       rescue => e
-        channel.write("command" => "error", "process" => "worker", "text" => e.message, "on" => on)
+        channel.write("command" => "error", "process" => "worker", "text" => "#{e.message}\n#{e.backtrace.join "\n"}", "on" => on)
       end
 
       def on

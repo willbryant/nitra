@@ -60,6 +60,7 @@ class Nitra::Master
           when "error"
             say_lines(data["text"], "#{data["on"]} [ERROR for #{data["process"]}] ")
             formatter.progress
+            channel.close
             runners.delete channel
 
           when "debug"
@@ -88,6 +89,7 @@ class Nitra::Master
             say "Unrecognised nitra command to master #{data["command"]}"
           end
         else
+          channel.close
           runners.delete channel
         end
       end

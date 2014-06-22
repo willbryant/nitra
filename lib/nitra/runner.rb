@@ -33,7 +33,8 @@ class Nitra::Runner
 
     tasks.run(:after_runner)
   rescue => e
-    server_channel.write("command" => "error", "process" => "runner", "text" => e.message, "on" => runner_id)
+    server_channel.write("command" => "error", "process" => "runner", "text" => "#{e.message}\n#{e.backtrace.join "\n"}", "on" => runner_id) rescue nil
+    kill_workers
   rescue Errno::EPIPE
   ensure
     trap("SIGTERM", "DEFAULT")
