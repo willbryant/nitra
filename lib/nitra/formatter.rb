@@ -25,6 +25,7 @@ module Nitra
 
       puts "\n#{overview}"
       puts "#{$aborted ? "Aborted after" : "Finished in"} #{"%0.1f" % (Time.now-start_time)} seconds"
+      $stdout.flush
     end
 
     private
@@ -46,6 +47,7 @@ module Nitra
     def print_failures
       return unless progress.output.length > 0 && configuration.print_failures
       puts progress.filtered_output
+      $stdout.flush
       progress.output = ""
     end
 

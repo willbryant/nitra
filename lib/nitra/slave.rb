@@ -22,7 +22,10 @@ module Nitra::Slave
     def start_host(slave_details)
       client, server = Nitra::Channel.pipe
 
-      puts "Starting slave runner with command '#{slave_details[:command]}'" if configuration.debug
+      if configuration.debug
+        puts "Starting slave runner with command '#{slave_details[:command]}'"
+        $stdout.flush
+      end
       slave_details_by_server[server] = slave_details
 
       pid = fork do

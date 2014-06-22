@@ -67,14 +67,14 @@ class Nitra::Master
 
           when "stdout"
             if configuration.debug
-              puts "STDOUT for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
+              say "STDOUT for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
             end
 
           when "stderr"
-            puts "STDERR for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
+            say "STDERR for #{data["process"]} on #{data["on"]} #{data["filename"]}:\n#{data["text"]}" unless data["text"].empty?
 
           when "retry"
-            puts "Re-running #{data["filename"]} on #{data["on"]}"
+            say "Re-running #{data["filename"]} on #{data["on"]}"
 
           when "slave_configuration"
             slave_details = slave.slave_details_by_server.fetch(channel)
@@ -87,7 +87,7 @@ class Nitra::Master
               "configuration" => slave_config)
 
           else
-            puts "Unrecognised nitra command to master #{data["command"]}"
+            say "Unrecognised nitra command to master #{data["command"]}"
           end
         else
           runners.delete channel
@@ -104,8 +104,13 @@ class Nitra::Master
   end
 
   protected
+  def say(text)
+    puts text
+    $stdout.flush
+  end
+
   def debug(*text)
-    puts "master: #{text.join}" if configuration.debug
+    say "master: #{text.join}" if configuration.debug
   end
 
   def map_files_to_frameworks(files)
