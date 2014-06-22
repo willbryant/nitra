@@ -66,7 +66,7 @@ module Nitra::Workers
       end
 
       if preloading
-        puts(io.string)
+        debug io.string
       else
         channel.write("command" => "result", "filename" => filename, "return_code" => result.to_i, "text" => io.string, "worker_number" => worker_number)
       end
