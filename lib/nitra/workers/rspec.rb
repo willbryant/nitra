@@ -15,6 +15,7 @@ module Nitra::Workers
     def load_environment
       require 'rspec'
       RSpec::Core::Runner.disable_autorun!
+      RSpec.configuration.output_stream = io
     end
 
     def minimal_file
