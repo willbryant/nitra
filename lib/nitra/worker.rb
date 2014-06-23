@@ -136,6 +136,8 @@ module Nitra
           file.close unless file.closed?
           file.unlink
           io.string = ""
+          $stdout.reopen('/dev/null', 'a') # some frameworks close the output streams, which makes the next fork() call fail
+          $stderr.reopen('/dev/null', 'a')
         end
         clean_up
       end
