@@ -37,10 +37,12 @@ module Nitra::Workers
       attempt = 1
       begin
         args = ["-f", "p", filename]
-        if RSpec::Core::const_defined?(:CommandLine)
+        if RSpec::Core::const_defined?(:CommandLine) && RSpec::Core::Version::STRING < "2.99"
           runner = RSpec::Core::CommandLine.new(args)
         else
-          runner = RSpec::Core::Runner.new(RSpec::Core::ConfigurationOptions.new(args))
+          options = RSpec::Core::ConfigurationOptions.new(args)
+          options.parse_options if options.respond_to?(:parse_options) # only for 2.99
+          runner = RSpec::Core::Runner.new(options)
         end
         result = runner.run(io, io)
 
