@@ -67,10 +67,14 @@ class Nitra::Master
             say_lines(data["text"], "#{data["on"]} [DEBUG] ") if configuration.debug
 
           when "stdout"
-            say_lines(data["text"], "#{data["on"]} [STDOUT for #{data["process"]}] ") if configuration.debug
+            if configuration.debug
+              say "#{data["on"]} [STDOUT for #{data["process"]}]"
+              say data["text"]
+            end
 
           when "stderr"
-            say_lines(data["text"], "#{data["on"]} [STDERR for #{data["process"]}] ")
+            say "#{data["on"]} [STDERR for #{data["process"]}]"
+            say data["text"]
 
           when "retry"
             say "#{data["on"]} Re-running #{data["filename"]}"
