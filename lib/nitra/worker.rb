@@ -92,8 +92,6 @@ module Nitra
         end
 
         debug "Started, using TEST_ENV_NUMBER #{ENV['TEST_ENV_NUMBER']}"
-        connect_to_database
-        reset_cache
 
         preload_framework
 
@@ -140,17 +138,6 @@ module Nitra
           $stderr.reopen('/dev/null', 'a')
         end
         clean_up
-      end
-
-      def connect_to_database
-        if defined?(Rails)
-          Nitra::RailsTooling.connect_to_database
-          debug("Connected to database #{ActiveRecord::Base.connection.current_database}")
-        end
-      end
-
-      def reset_cache
-        Nitra::RailsTooling.reset_cache if defined?(Rails)
       end
 
       ##
