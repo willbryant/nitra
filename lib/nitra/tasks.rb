@@ -19,7 +19,7 @@ class Nitra::Tasks
         rd.close
         $stdout.reopen(wr)
         $stderr.reopen(wr)
-        connect_to_database
+        disconnect_from_database
         Array(tasks).each do |task|
           Rake::Task[task].invoke
         end
@@ -41,8 +41,8 @@ class Nitra::Tasks
 
   private
 
-  def connect_to_database
-    Nitra::RailsTooling.connect_to_database
+  def disconnect_from_database
+    Nitra::RailsTooling.disconnect_from_database
   end
 
   ##
