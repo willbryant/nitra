@@ -12,6 +12,7 @@ module Nitra
       # change some flags to get different environments through forking we need
       # always reload our database config...
       ActiveRecord::Base.configurations = YAML.load(ERB.new(IO.read("#{Rails.root}/config/database.yml")).result)
+      ActiveRecord::Base.default_connection_handler = ActiveRecord::ConnectionAdapters::ConnectionHandler.new if ActiveRecord::Base.respond_to?(:default_connection_handler)
       ActiveRecord::Base.establish_connection
     end
 
