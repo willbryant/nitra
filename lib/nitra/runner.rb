@@ -94,11 +94,8 @@ class Nitra::Runner
         end
 
         case data['command']
-        when "debug", "stdout", "stderr", "error", "retry"
+        when "debug", "stdout", "stderr", "error", "retry", "result"
           server_channel.write(data)
-
-        when "result"
-          handle_result(data)
 
         when "next_file"
           handle_next_file(data, channel)
@@ -108,46 +105,6 @@ class Nitra::Runner
         end
       end
     end
-  end
-
-  ##
-  # This parses the results we got back from the worker.
-  #
-  # It needs rewriting when we finally rewrite the workers to use custom formatters.
-  #
-  # Also, it's probably buggy as hell...
-  #
-  def handle_result(data)
-    #defaults - theoretically anything can end up here so we just want to pass on useful data
-    result_text = ""
-    test_count = 0
-    failure_count = 0
-    return_code = data["return_code"].to_i
-
-    # Rspec result
-    if m = data['text'].match(/(\d+) examples?, (\d+) failure/)
-      test_count = m[1].to_i
-      failure_count = m[2].to_i
-
-    # Cucumber result
-    elsif m = data['text'].match(/(\d+) scenarios?.+$/)
-      test_count = m[1].to_i
-      if m = data['text'].match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
-        failure_count = m[1].to_i
-      else
-        failure_count = 0
-      end
-    end
-
-    result_text = data['text'] if failure_count > 0 || return_code != 0
-
-    server_channel.write(
-      "command"       => "result",
-      "filename"      => data["filename"],
-      "return_code"   => return_code,
-      "test_count"    => test_count,
-      "failure_count" => failure_count,
-      "text"          => result_text)
   end
 
   def handle_next_file(data, worker_channel)

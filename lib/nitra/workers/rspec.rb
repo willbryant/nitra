@@ -45,15 +45,15 @@ module Nitra::Workers
           options.parse_options if options.respond_to?(:parse_options) # only for 2.99
           runner = RSpec::Core::Runner.new(options)
         end
-        result = runner.run(io, io)
+        failed = runner.run(io, io).to_i != 0
 
-        if result.to_i != 0 && @configuration.exceptions_to_retry && attempt < @configuration.max_attempts &&
+        if failed && @configuration.exceptions_to_retry && attempt < @configuration.max_attempts &&
            io.string =~ @configuration.exceptions_to_retry
           raise RetryException
         end
       rescue LoadError => e
         io << "\nCould not load file #{filename}: #{e.message}\n\n"
-        result = 1
+        failed = true
       rescue RetryException
         channel.write("command" => "retry", "filename" => filename, "on" => on)
         attempt += 1
@@ -63,13 +63,28 @@ module Nitra::Workers
       rescue Exception => e
         io << "Exception when running #{filename}: #{e.message}"
         io << e.backtrace[0..7].join("\n")
-        result = 1
+        failed = true
       end
 
       if preloading
         debug io.string
       else
-        channel.write("command" => "result", "filename" => filename, "return_code" => result.to_i, "text" => io.string, "worker_number" => worker_number)
+        if m = io.string.match(/(\d+) examples?, (\d+) failure/)
+          test_count = m[1].to_i
+          failure_count = m[2].to_i
+          failure = true if failure_count >  0
+        else
+          test_count = failure_count = 0
+        end
+
+        channel.write(
+          "command"       => "result",
+          "filename"      => filename,
+          "failed"        => failed,
+          "test_count"    => test_count,
+          "failure_count" => failure_count,
+          "text"          => failed ? io.string : "",
+          "on"            => on)
       end
     end
 

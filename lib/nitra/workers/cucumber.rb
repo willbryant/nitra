@@ -39,7 +39,7 @@ module Nitra::Workers
     def run_file(filename, preloading = false)
       attempt = 1
       begin
-        result = 1
+        failed = true
         cuke_config = ::Cucumber::Cli::Configuration.new(io, io)
         cuke_config.parse!(["--no-color", "--require", "features", filename])
         cuke_runtime.configure(cuke_config)
@@ -49,14 +49,14 @@ module Nitra::Workers
            cuke_runtime.results.scenarios(:failed).any? {|scenario| scenario.exception.to_s =~ @configuration.exceptions_to_retry}
           raise RetryException
         end
-        result = 0 unless cuke_runtime.results.failure?
+        failed = false unless cuke_runtime.results.failure?
       rescue LoadError => e
         debug "load error"
         io << "\nCould not load file #{filename}: #{e.message}\n\n"
       rescue RetryException
         channel.write("command" => "retry", "filename" => filename, "on" => on)
         attempt += 1
-        cuke_runtime.reset
+        clean_up
         io.string = ""
         retry
       rescue Exception => e
@@ -68,7 +68,26 @@ module Nitra::Workers
       if preloading
         debug io.string
       else
-        channel.write("command" => "result", "filename" => filename, "return_code" => result.to_i, "text" => io.string, "worker_number" => worker_number)
+        if m = io.string.match(/(\d+) scenarios?.+$/)
+          test_count = m[1].to_i
+          if m = io.string.match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
+            failure_count = m[1].to_i
+            failed = true if failure_count > 0
+          else
+            failure_count = 0
+          end
+        else
+          test_count = failure_count = 0
+        end
+
+        channel.write(
+          "command"       => "result",
+          "filename"      => filename,
+          "failed"        => failed,
+          "test_count"    => test_count,
+          "failure_count" => failure_count,
+          "text"          => failed ? io.string : "",
+          "on"            => on)
       end
     end
 
