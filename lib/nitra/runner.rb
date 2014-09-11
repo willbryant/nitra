@@ -71,23 +71,23 @@ class Nitra::Runner
   end
 
   def start_worker(index)
-    pid, pipe = Nitra::Workers::Worker.worker_classes[framework].new(runner_id, index, configuration).fork_and_run
-    workers[index] = {:pid => pid, :pipe => pipe}
+    pid, channel = Nitra::Workers::Worker.worker_classes[framework].new(runner_id, index, configuration).fork_and_run
+    workers[index] = {:pid => pid, :channel => channel}
   end
 
-  def worker_pipes
-    workers.collect {|index, worker_hash| worker_hash[:pipe]}
+  def worker_channels
+    workers.collect {|index, worker_hash| worker_hash[:channel]}
   end
 
   def hand_out_files_to_workers
     while !$aborted && workers.length > 0
-      Nitra::Channel.read_select(worker_pipes + [server_channel]).each do |channel|
+      Nitra::Channel.read_select(worker_channels + [server_channel]).each do |channel|
 
         # This is our back-channel that lets us know in case the master is dead.
         kill_workers if channel == server_channel && server_channel.rd.eof?
 
         unless data = channel.read
-          worker_number, worker_hash = workers.find {|number, hash| hash[:pipe] == channel}
+          worker_number, worker_hash = workers.find {|number, hash| hash[:channel] == channel}
           workers.delete worker_number
           debug "Worker #{worker_number} unexpectedly died."
           next
