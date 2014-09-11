@@ -182,8 +182,12 @@ class Nitra::Runner
   # Kill the workers.
   #
   def kill_workers
-    worker_pids = workers.collect{|index, hash| hash[:pid]}
-    worker_pids.each {|pid| Process.kill('USR1', pid) rescue Errno::ESRCH}
+    workers.each do |index, hash|
+      begin
+        Process.kill('USR1', hash[:pid])
+      rescue Errno::ESRCH
+      end
+    end
     Process.waitall
     exit
   end
