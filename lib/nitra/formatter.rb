@@ -55,7 +55,7 @@ module Nitra
     # A simple overview of files processed so far and success/failure numbers.
     #
     def overview
-      "#{progress.files_completed}/#{progress.file_count} files | #{progress.example_count} examples, #{progress.failure_count} failures"
+      "#{progress.files_completed}/#{progress.file_count} files | #{progress.test_count} tests, #{progress.failure_count} failures"
     end
   end
 end

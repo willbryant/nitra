@@ -120,10 +120,10 @@ class Nitra::Master
         end
 
       when "result"
-        examples = data["example_count"] || 0
+        tests = data["test_count"] || 0
         failures = data["failure_count"] || 0
         failure = data["return_code"].to_i != 0
-        progress.file_progress(examples, failures, failure, data["text"])
+        progress.file_progress(tests, failures, failure, data["text"])
         formatter.print_progress
 
       when "error"

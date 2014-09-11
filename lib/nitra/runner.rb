@@ -100,8 +100,8 @@ class Nitra::Runner
         when "result"
           handle_result(data)
 
-        when "ready"
-          handle_ready(data, worker_channel)
+        when "next_file"
+          handle_next_file(data, worker_channel)
 
         else
           raise "Unrecognised nitra command to runner #{data["command"]}"
@@ -120,18 +120,18 @@ class Nitra::Runner
   def handle_result(data)
     #defaults - theoretically anything can end up here so we just want to pass on useful data
     result_text = ""
-    example_count = 0
+    test_count = 0
     failure_count = 0
     return_code = data["return_code"].to_i
 
     # Rspec result
     if m = data['text'].match(/(\d+) examples?, (\d+) failure/)
-      example_count = m[1].to_i
+      test_count = m[1].to_i
       failure_count = m[2].to_i
 
     # Cucumber result
     elsif m = data['text'].match(/(\d+) scenarios?.+$/)
-      example_count = m[1].to_i
+      test_count = m[1].to_i
       if m = data['text'].match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
         failure_count = m[1].to_i
       else
@@ -145,12 +145,12 @@ class Nitra::Runner
       "command"       => "result",
       "filename"      => data["filename"],
       "return_code"   => return_code,
-      "example_count" => example_count,
+      "test_count"    => test_count,
       "failure_count" => failure_count,
       "text"          => result_text)
   end
 
-  def handle_ready(data, worker_channel)
+  def handle_next_file(data, worker_channel)
     worker_number = data["worker_number"]
     server_channel.write("command" => "next", "framework" => data["framework"])
     data = server_channel.read
@@ -165,7 +165,7 @@ class Nitra::Runner
 
     when "file"
       debug "Sending #{data["filename"]} to #{worker_number}"
-      worker_channel.write "command" => "process", "filename" => data["filename"]
+      worker_channel.write "command" => "process_file", "filename" => data["filename"]
 
     when "drain"
       close_worker(worker_number, worker_channel)
