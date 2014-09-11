@@ -131,7 +131,9 @@ module Nitra
             run_file(file.path, true)
           end
 
-          channel.write("command" => "stdout", "process" => "preload framework", "text" => output, "on" => on) unless output.empty?
+          debug io.string
+
+          channel.write("command" => "stdout", "process" => "preload framework", "text" => output, "on" => on) if !output.empty? && configuration.debug
         ensure
           file.close unless file.closed?
           file.unlink
@@ -188,8 +190,8 @@ module Nitra
         @forked_worker_pid = nil
 
         end_time = Time.now
-        channel.write("command" => "stdout", "process" => filename, "text" => stdout_text, "on" => on) unless stdout_text.empty?
-        channel.write("command" => "stderr", "process" => filename, "text" => stderr_text, "on" => on) unless stderr_text.empty?
+        channel.write("command" => "stdout", "process" => filename, "text" => stdout_text, "on" => on) if !stdout_text.empty? && configuration.debug
+        channel.write("command" => "stderr", "process" => filename, "text" => stderr_text, "on" => on) if !stderr_text.empty?
         debug "#{filename} processed in #{'%0.2f' % (end_time - start_time)}s"
       end
 

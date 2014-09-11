@@ -35,7 +35,7 @@ class Nitra::Tasks
     end
     rd.close
     successful = all_children_successful?
-    runner.server_channel.write("command" => (successful ? 'stdout' : 'error'), "process" => tasks.inspect, "text" => output, "on" => runner.runner_id)
+    runner.server_channel.write("command" => (successful ? 'stdout' : 'error'), "process" => tasks.inspect, "text" => output, "on" => runner.runner_id) if !successful || runner.configuration.debug
     exit if !successful
   end
 

@@ -136,10 +136,8 @@ class Nitra::Master
         say_lines(data["text"], "#{data["on"]} [DEBUG] ") if configuration.debug
 
       when "stdout"
-        if configuration.debug
-          say "#{data["on"]} [STDOUT for #{data["process"]}]"
-          say data["text"]
-        end
+        say "#{data["on"]} [STDOUT for #{data["process"]}]"
+        say data["text"]
 
       when "stderr"
         say "#{data["on"]} [STDERR for #{data["process"]}]"

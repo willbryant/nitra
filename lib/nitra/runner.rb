@@ -61,7 +61,7 @@ class Nitra::Runner
       ActiveRecord::Base.connection.disconnect!
     end
 
-    server_channel.write("command" => "stdout", "process" => "rails initialisation", "text" => output, "on" => runner_id)
+    server_channel.write("command" => "stdout", "process" => "rails initialisation", "text" => output, "on" => runner_id) if configuration.debug
   end
 
   def start_workers
