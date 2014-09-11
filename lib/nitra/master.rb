@@ -16,11 +16,7 @@ class Nitra::Master
   def run
     return if files_remaining == 0
 
-    progress = Nitra::Progress.new
     progress.file_count = files_remaining
-    formatter = Nitra::Formatter.new(progress, configuration)
-
-    runners = []
 
     if configuration.process_count > 0
       client, runner = Nitra::Channel.pipe
@@ -32,70 +28,13 @@ class Nitra::Master
       runners << runner
     end
 
-    slave = Nitra::Slave::Client.new(configuration)
-    runners += slave.connect
+    runners.concat slave.connect
 
     formatter.start
 
     while runners.length > 0
       Nitra::Channel.read_select(runners).each do |channel|
-        if data = channel.read
-          case data["command"]
-          when "next"
-            if files_remaining == 0
-              channel.write "command" => "drain"
-            elsif data["framework"] == current_framework
-              channel.write "command" => "file", "filename" => next_file
-            else
-              channel.write "command" => "framework", "framework" => current_framework
-            end
-
-          when "result"
-            examples = data["example_count"] || 0
-            failures = data["failure_count"] || 0
-            failure = data["return_code"].to_i != 0
-            progress.file_progress(examples, failures, failure, data["text"])
-            formatter.print_progress
-
-          when "error"
-            say_lines(data["text"], "#{data["on"]} [ERROR for #{data["process"]}] ")
-            formatter.progress
-            channel.close
-            runners.delete channel
-
-          when "debug"
-            say_lines(data["text"], "#{data["on"]} [DEBUG] ") if configuration.debug
-
-          when "stdout"
-            if configuration.debug
-              say "#{data["on"]} [STDOUT for #{data["process"]}]"
-              say data["text"]
-            end
-
-          when "stderr"
-            say "#{data["on"]} [STDERR for #{data["process"]}]"
-            say data["text"]
-
-          when "retry"
-            say "#{data["on"]} Re-running #{data["filename"]}"
-
-          when "slave_configuration"
-            slave_details = slave.slave_details_by_server.fetch(channel)
-            slave_config = configuration.dup
-            slave_config.process_count = slave_details.fetch(:cpus)
-
-            debug "#{data["on"]} Slave runner configuration requested"
-            channel.write(
-              "command" => "configuration",
-              "configuration" => slave_config)
-
-          else
-            say "Unrecognised nitra command to master #{data["command"]}"
-          end
-        else
-          channel.close
-          runners.delete channel
-        end
+        process_channel(channel)
       end
     end
 
@@ -120,6 +59,22 @@ class Nitra::Master
 
   def debug(*text)
     say "master: [DEBUG] #{text.join}" if configuration.debug
+  end
+
+  def slave
+    @slave ||= Nitra::Slave::Client.new(configuration)
+  end
+
+  def runners
+    @runners ||= []
+  end
+
+  def progress
+    @progress ||= Nitra::Progress.new
+  end
+
+  def formatter
+    @formatter ||= Nitra::Formatter.new(progress, configuration)
   end
 
   def map_files_to_frameworks(files)
@@ -150,5 +105,68 @@ class Nitra::Master
     file = current_framework_files.shift
     @current_framework = frameworks.shift if current_framework_files.length == 0
     file
+  end
+
+  def process_channel(channel)
+    if data = channel.read
+      case data["command"]
+      when "next"
+        if files_remaining == 0
+          channel.write "command" => "drain"
+        elsif data["framework"] == current_framework
+          channel.write "command" => "file", "filename" => next_file
+        else
+          channel.write "command" => "framework", "framework" => current_framework
+        end
+
+      when "result"
+        examples = data["example_count"] || 0
+        failures = data["failure_count"] || 0
+        failure = data["return_code"].to_i != 0
+        progress.file_progress(examples, failures, failure, data["text"])
+        formatter.print_progress
+
+      when "error"
+        say_lines(data["text"], "#{data["on"]} [ERROR for #{data["process"]}] ")
+        formatter.progress
+        channel.close
+        runners.delete channel
+
+      when "debug"
+        say_lines(data["text"], "#{data["on"]} [DEBUG] ") if configuration.debug
+
+      when "stdout"
+        if configuration.debug
+          say "#{data["on"]} [STDOUT for #{data["process"]}]"
+          say data["text"]
+        end
+
+      when "stderr"
+        say "#{data["on"]} [STDERR for #{data["process"]}]"
+        say data["text"]
+
+      when "retry"
+        say "#{data["on"]} Re-running #{data["filename"]}"
+
+      when "slave_configuration"
+        slave_details = slave.slave_details_by_server.fetch(channel)
+        slave_config = configuration.dup
+        slave_config.process_count = slave_details.fetch(:cpus)
+
+        debug "#{data["on"]} Slave runner configuration requested"
+        channel.write(
+          "command" => "configuration",
+          "configuration" => slave_config)
+
+      else
+        say "Unrecognised nitra command to master #{data["command"]}"
+      end
+    else
+      channel.close
+      runners.delete channel
+    end
+  rescue Nitra::Channel::ProtocolInvalidError => e
+    slave_details = slave.slave_details_by_server.fetch(channel)
+    raise Nitra::Channel::ProtocolInvalidError, "Error running #{slave_details[:command]}: #{e.message}"
   end
 end

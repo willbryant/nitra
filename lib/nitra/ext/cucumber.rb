@@ -16,7 +16,7 @@ module Cucumber
     # Cucumber lacks a reset hook like the one Rspec has so we need to patch one in...
     # Call this after configure so that the correct configuration is used to create the result set.
     def reset
-      @results = Results.new(nil)
+      @results = Results.new(@configuration)
     end
 
     # Cucumber > 1.1.0 memoizes @loader which means we can't load in new files.
