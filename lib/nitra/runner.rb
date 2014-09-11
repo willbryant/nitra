@@ -1,17 +1,17 @@
 require 'stringio'
 
 class Nitra::Runner
-  attr_reader :configuration, :server_channel, :runner_id, :framework, :workers, :tasks
+  attr_reader :configuration, :server_channel, :runner_id, :current_framework, :workers, :tasks
 
   def initialize(configuration, server_channel, runner_id)
     ENV["RAILS_ENV"] = configuration.environment
 
-    @workers         = {}
-    @runner_id       = runner_id
-    @framework       = configuration.framework
-    @configuration   = configuration
-    @server_channel  = server_channel
-    @tasks           = Nitra::Tasks.new(self)
+    @workers           = {}
+    @runner_id         = runner_id
+    @current_framework = configuration.framework
+    @configuration     = configuration
+    @server_channel    = server_channel
+    @tasks             = Nitra::Tasks.new(self)
 
     configuration.calculate_default_process_count
     server_channel.raise_epipe_on_write_error = true
@@ -71,7 +71,7 @@ class Nitra::Runner
   end
 
   def start_worker(index)
-    pid, channel = Nitra::Workers::Worker.worker_classes[framework].new(runner_id, index, configuration).fork_and_run
+    pid, channel = Nitra::Workers::Worker.worker_classes[current_framework].new(runner_id, index, configuration).fork_and_run
     workers[index] = {:pid => pid, :channel => channel}
   end
 
@@ -87,52 +87,48 @@ class Nitra::Runner
         kill_workers if channel == server_channel && server_channel.rd.eof?
 
         unless data = channel.read
-          worker_number, worker_hash = workers.find {|number, hash| hash[:channel] == channel}
-          workers.delete worker_number
+          worker_number = worker_number_of(channel)
           debug "Worker #{worker_number} unexpectedly died."
+          workers.delete worker_number
           next
         end
 
+        # we pass all commands straight through to the master - the workers aren't allowed to
+        # communicate with it directly because they would need to mutex to share the pipe
+        server_channel.write(data)
+
+        # we only need to do something for the next_file command, for which the master sends
+        # back a command that we need to interpret
         case data['command']
-        when "debug", "stdout", "stderr", "error", "retry", "result"
-          server_channel.write(data)
-
         when "next_file"
-          handle_next_file(data, channel)
-
-        else
-          raise "Unrecognised nitra command to runner #{data["command"]}"
+          handle_next_file_response(server_channel.read, worker_number_of(channel), channel)
         end
       end
     end
   end
 
-  def handle_next_file(data, worker_channel)
-    worker_number = data["worker_number"]
-    server_channel.write("command" => "next", "framework" => data["framework"])
-    data = server_channel.read
-
+  def handle_next_file_response(data, worker_number, worker_channel)
     case data["command"]
-    when "framework"
-      close_worker(worker_number, worker_channel)
-
-      @framework = data["framework"]
-      debug "Restarting #{worker_number} with framework #{framework}"
-      start_worker(worker_number)
-
-    when "file"
-      debug "Sending #{data["filename"]} to #{worker_number}"
-      worker_channel.write "command" => "process_file", "filename" => data["filename"]
-
     when "drain"
       close_worker(worker_number, worker_channel)
+
+    when "framework"
+      @current_framework = data["framework"]
+      close_worker(worker_number, worker_channel)
+      start_worker(worker_number)
+
+    when "process_file"
+      worker_channel.write data
     end
   end
 
   def close_worker(worker_number, worker_channel)
-    debug "Sending close message to #{worker_number}"
     worker_channel.write "command" => "close"
     workers.delete worker_number
+  end
+
+  def worker_number_of(worker_channel)
+    workers.find {|number, hash| hash[:channel] == worker_channel} .first
   end
 
   ##

@@ -110,12 +110,16 @@ class Nitra::Master
   def process_channel(channel)
     if data = channel.read
       case data["command"]
-      when "next"
+      when "next_file"
         if files_remaining == 0
+          debug "#{data["on"]} Finished with this worker"
           channel.write "command" => "drain"
         elsif data["framework"] == current_framework
-          channel.write "command" => "file", "filename" => next_file
+          file = next_file
+          debug "#{data["on"]} Assigning #{file}"
+          channel.write "command" => "process_file", "filename" => file
         else
+          debug "#{data["on"]} Restarting worker with framework #{current_framework}"
           channel.write "command" => "framework", "framework" => current_framework
         end
 

@@ -100,7 +100,7 @@ module Nitra
         # Loop until our runner passes us a message from the master to tells us we're finished.
         loop do
           debug "Announcing availability"
-          channel.write("command" => "next_file", "framework" => self.class.framework_name, "worker_number" => worker_number)
+          channel.write("command" => "next_file", "framework" => self.class.framework_name, "on" => on)
           debug "Waiting for next job"
           data = channel.read
           if data.nil? || data["command"] == "close"
