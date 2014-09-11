@@ -46,16 +46,16 @@ module Nitra
           configuration.add_rake_task(:before_worker, "db:reset")
         end
 
+        opts.on("--rspec", "Add full rspec run, causes any files you list manually to be ignored") do
+          configuration.add_framework "rspec"
+        end
+
         opts.on("--slave-mode", "Run in slave mode; ignores all other command-line options") do
           configuration.slave_mode = true
         end
 
         opts.on("--slave CONNECTION_COMMAND", String, "Provide a command that executes \"nitra --slave-mode\" on another host") do |connection_command|
           configuration.add_slave connection_command
-        end
-
-        opts.on("--rspec", "Add full rspec run, causes any files you list manually to be ignored") do
-          configuration.add_framework "rspec"
         end
 
         opts.on("-e", "--environment ENV", String, "Set the RAILS_ENV to load") do |env|
@@ -79,6 +79,8 @@ module Nitra
           exit
         end
       end.parse!(argv)
+
+      puts "You should use the --rspec and/or --cucumber options to run some tests." if configuration.frameworks.empty? && !configuration.slave_mode
 
       configuration.set_default_framework
     end
