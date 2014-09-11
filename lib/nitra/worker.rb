@@ -73,7 +73,7 @@ module Nitra
         raise 'Subclasses must implement this method.'
       end
 
-      def run_file(filename, preload = false)
+      def run_file(filename, preloading = false)
         raise 'Subclasses must implement this method.'
       end
 
@@ -173,9 +173,10 @@ module Nitra
           trap('USR1') { exit! }  # at_exit hooks will be run in the parent.
           $stdout.reopen(stdout_pipe[1])
           $stderr.reopen(stderr_pipe[1])
-
           $0 = filename
-          run_file(filename)
+
+          @attempt = 1
+          run_file_and_handle_errors(filename)
 
           stdout_pipe.each(&:close)
           stderr_pipe.each(&:close)
@@ -193,6 +194,41 @@ module Nitra
         channel.write("command" => "stdout", "process" => filename, "text" => stdout_text, "on" => on) if !stdout_text.empty? && configuration.debug
         channel.write("command" => "stderr", "process" => filename, "text" => stderr_text, "on" => on) if !stderr_text.empty?
         debug "#{filename} processed in #{'%0.2f' % (end_time - start_time)}s"
+      end
+
+      def run_file_and_handle_errors(filename)
+        result = run_file(filename)
+        result["failed"] ||= result["failure_count"] > 0
+        channel.write result.merge({
+          "command"   => "result",
+          "filename"  => filename,
+          "on"        => on,
+          "text"      => result["failed"] ? io.string : "",
+        })
+
+      rescue RetryException
+        @attempt += 1
+        clean_up
+        channel.write({
+          "command"   => "retry",
+          "filename"  => filename,
+          "on"        => on,
+        })
+        retry
+
+      rescue LoadError, Exception => e
+        io << "Exception when running #{filename}: #{e.message}\n#{e.backtrace[0..7].join("\n")}"
+        channel.write({
+          "command"   => "result",
+          "filename"  => filename,
+          "on"        => on,
+          "failed"    => true,
+          "text"      => io.string,
+        })
+      end
+
+      def clean_up
+        io.string = ""
       end
 
       def read_all_descriptors(*descriptors)

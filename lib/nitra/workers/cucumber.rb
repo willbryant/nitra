@@ -32,66 +32,41 @@ module Nitra::Workers
     end
 
     ##
-    # Run a Cucumber file and write the results back to the runner.
-    #
-    # Doesn't write back to the runner if we mark the run as preloading.
+    # Run a Cucumber file.
     #
     def run_file(filename, preloading = false)
-      attempt = 1
-      begin
-        failed = true
-        cuke_config = ::Cucumber::Cli::Configuration.new(io, io)
-        cuke_config.parse!(["--no-color", "--require", "features", filename])
-        cuke_runtime.configure(cuke_config)
-        cuke_runtime.run!
+      cuke_config = ::Cucumber::Cli::Configuration.new(io, io)
+      cuke_config.parse!(["--no-color", "--require", "features", filename])
+      cuke_runtime.configure(cuke_config)
 
-        if cuke_runtime.results.failure? && @configuration.exceptions_to_retry && attempt < @configuration.max_attempts &&
-           cuke_runtime.results.scenarios(:failed).any? {|scenario| scenario.exception.to_s =~ @configuration.exceptions_to_retry}
-          raise RetryException
-        end
-        failed = false unless cuke_runtime.results.failure?
-      rescue LoadError => e
-        debug "load error"
-        io << "\nCould not load file #{filename}: #{e.message}\n\n"
-      rescue RetryException
-        channel.write("command" => "retry", "filename" => filename, "on" => on)
-        attempt += 1
-        clean_up
-        io.string = ""
-        retry
-      rescue Exception => e
-        debug "had exception #{e.inspect}"
-        io << "Exception when running #{filename}: #{e.message}"
-        io << e.backtrace[0..7].join("\n")
+      cuke_runtime.run!
+
+      if cuke_runtime.results.failure? && @configuration.exceptions_to_retry && @attempt < @configuration.max_attempts &&
+         cuke_runtime.results.scenarios(:failed).any? {|scenario| scenario.exception.to_s =~ @configuration.exceptions_to_retry}
+        raise RetryException
       end
 
-      if preloading
-        debug io.string
-      else
-        if m = io.string.match(/(\d+) scenarios?.+$/)
-          test_count = m[1].to_i
-          if m = io.string.match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
-            failure_count = m[1].to_i
-            failed = true if failure_count > 0
-          else
-            failure_count = 0
-          end
+      if m = io.string.match(/(\d+) scenarios?.+$/)
+        test_count = m[1].to_i
+        if m = io.string.match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
+          failure_count = m[1].to_i
         else
-          test_count = failure_count = 0
+          failure_count = 0
         end
-
-        channel.write(
-          "command"       => "result",
-          "filename"      => filename,
-          "failed"        => failed,
-          "test_count"    => test_count,
-          "failure_count" => failure_count,
-          "text"          => failed ? io.string : "",
-          "on"            => on)
+      else
+        test_count = failure_count = 0
       end
+
+      {
+        "failed"        => cuke_runtime.results.failure?,
+        "test_count"    => test_count,
+        "failure_count" => failure_count,
+      }
     end
 
     def clean_up
+      super
+
       cuke_runtime.reset
     end
   end
