@@ -17,13 +17,7 @@ module Cucumber
     # Call this after configure so that the correct configuration is used to create the result set.
     def reset
       @results = Results.new(@configuration)
-    end
-
-    # Cucumber > 1.1.0 memoizes @loader which means we can't load in new files.
-    # Patch it back to how it used to work.
-    def features
       @loader = nil
-      super
     end
   end
 end
