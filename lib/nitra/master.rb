@@ -46,19 +46,23 @@ class Nitra::Master
     !$aborted && progress.files_completed == progress.file_count && progress.failure_count.zero? && !progress.failure
   end
 
-  protected
+protected
   def say(text)
-    puts text
+    puts "#{current_time} #{text}"
     $stdout.flush
   end
 
   def say_lines(text, prefix)
-    text.split(/\n/).each {|line| puts "#{prefix}#{line}"}
+    text.split(/\n/).each {|line| puts "#{current_time} #{prefix}#{line}"}
     $stdout.flush
   end
 
   def debug(*text)
     say "master: [DEBUG] #{text.join}" if configuration.debug
+  end
+
+  def current_time
+    Time.now.strftime('%Y-%m-%d %H:%M:%S')
   end
 
   def slave
