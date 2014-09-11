@@ -51,7 +51,7 @@ class Nitra::Runner
 
   def load_rails_environment
     return unless File.file?('config/application.rb')
-    debug "Loading rails environment..."
+    server_channel.write("command" => "starting", "framework" => "rails", "on" => runner_id)
 
     ENV["TEST_ENV_NUMBER"] = "1"
 
@@ -61,6 +61,7 @@ class Nitra::Runner
       ActiveRecord::Base.connection.disconnect!
     end
 
+    server_channel.write("command" => "started", "framework" => "rails", "on" => runner_id)
     server_channel.write("command" => "stdout", "process" => "rails initialisation", "text" => output, "on" => runner_id) if configuration.debug
   end
 

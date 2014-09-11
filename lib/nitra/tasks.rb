@@ -11,7 +11,7 @@ class Nitra::Tasks
 
   def run(name, count = 1)
     return unless tasks = runner.configuration.rake_tasks[name]
-    runner.debug "Running #{name} tasks: #{tasks.inspect}"
+    runner.server_channel.write("command" => "starting", "framework" => "rake #{name}", "on" => runner.runner_id)
     rd, wr = IO.pipe
     (1..count).collect do |index|
       fork do
@@ -35,6 +35,7 @@ class Nitra::Tasks
     end
     rd.close
     successful = all_children_successful?
+    runner.server_channel.write("command" => "started", "framework" => "rake #{name}", "on" => runner.runner_id)
     runner.server_channel.write("command" => (successful ? 'stdout' : 'error'), "process" => tasks.inspect, "text" => output, "on" => runner.runner_id) if !successful || runner.configuration.debug
     exit if !successful
   end

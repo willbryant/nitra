@@ -91,11 +91,11 @@ module Nitra
           Process.kill("SIGKILL", Process.pid) 
         end
 
-        debug "Started, using TEST_ENV_NUMBER #{ENV['TEST_ENV_NUMBER']}"
+        channel.write("command" => "starting", "framework" => self.class.framework_name, "on" => on)
         connect_to_database
         reset_cache
-
         preload_framework
+        channel.write("command" => "started", "framework" => self.class.framework_name, "on" => on)
 
         # Loop until our runner passes us a message from the master to tells us we're finished.
         loop do
@@ -165,7 +165,6 @@ module Nitra
       #
       def process_file(filename)
         debug "Starting to process #{filename}"
-        start_time = Time.now
 
         stdout_pipe = IO.pipe
         stderr_pipe = IO.pipe
@@ -190,10 +189,8 @@ module Nitra
         Process.wait(@forked_worker_pid) if @forked_worker_pid
         @forked_worker_pid = nil
 
-        end_time = Time.now
         channel.write("command" => "stdout", "process" => filename, "text" => stdout_text, "on" => on) if !stdout_text.empty? && configuration.debug
         channel.write("command" => "stderr", "process" => filename, "text" => stderr_text, "on" => on) if !stderr_text.empty?
-        debug "#{filename} processed in #{'%0.2f' % (end_time - start_time)}s"
       end
 
       def run_file_and_handle_errors(filename)
@@ -201,6 +198,7 @@ module Nitra
         result["failed"] ||= result["failure_count"] > 0
         channel.write result.merge({
           "command"   => "result",
+          "framework" => self.class.framework_name,
           "filename"  => filename,
           "on"        => on,
           "text"      => result["failed"] ? io.string : "",
@@ -211,6 +209,7 @@ module Nitra
         clean_up
         channel.write({
           "command"   => "retry",
+          "framework" => self.class.framework_name,
           "filename"  => filename,
           "on"        => on,
         })
@@ -220,6 +219,7 @@ module Nitra
         io << "Exception when running #{filename}: #{e.message}\n#{e.backtrace[0..7].join("\n")}"
         channel.write({
           "command"   => "result",
+          "framework" => self.class.framework_name,
           "filename"  => filename,
           "on"        => on,
           "failed"    => true,

@@ -2,7 +2,7 @@ require 'nitra/utils'
 
 module Nitra
   class Configuration
-    attr_accessor :debug, :quiet, :print_failures, :rake_tasks, :exceptions_to_retry, :max_attempts
+    attr_accessor :debug, :quiet, :print_failures, :burndown_report, :rake_tasks, :exceptions_to_retry, :max_attempts
     attr_accessor :process_count, :environment, :slaves, :slave_mode, :framework, :frameworks
 
     def initialize

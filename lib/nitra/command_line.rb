@@ -10,6 +10,10 @@ module Nitra
       OptionParser.new do |opts|
         opts.banner = "Usage: nitra [options] [spec_filename [...]]"
 
+        opts.on("--burndown FILENAME", String, "Produce a burndown report showing the test execution times") do |filename|
+          configuration.burndown_report = filename
+        end
+
         opts.on("-c", "--cpus NUMBER", Integer, "Specify the number of CPUs to use on the host, or if specified after a --slave, on the slave") do |n|
           configuration.set_process_count n
         end

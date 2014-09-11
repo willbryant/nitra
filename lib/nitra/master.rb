@@ -31,6 +31,7 @@ class Nitra::Master
     runners.concat slave.connect
 
     formatter.start
+    burndown.start
 
     while runners.length > 0
       Nitra::Channel.read_select(runners).each do |channel|
@@ -42,6 +43,7 @@ class Nitra::Master
     Process.waitall
 
     formatter.finish
+    burndown.finish configuration.burndown_report if configuration.burndown_report
 
     !$aborted && progress.files_completed == progress.file_count && progress.failure_count.zero? && !progress.failure
   end
@@ -79,6 +81,10 @@ protected
 
   def formatter
     @formatter ||= Nitra::Formatter.new(progress, configuration)
+  end
+
+  def burndown
+    @burndown ||= Nitra::Burndown.new
   end
 
   def map_files_to_frameworks(files)
@@ -120,6 +126,7 @@ protected
           channel.write "command" => "drain"
         elsif data["framework"] == current_framework
           file = next_file
+          burndown.next_file(data["on"], data["framework"], file)
           debug "#{data["on"]} Assigning #{file}"
           channel.write "command" => "process_file", "filename" => file
         else
@@ -131,8 +138,22 @@ protected
         tests = data["test_count"] || 0
         failures = data["failure_count"] || 0
         failed = data["failed"]
+        duration = burndown.result(data["on"], data["framework"], data["filename"], tests, failures, failed)
+        debug "#{data["on"]} took #{'%0.2f' % duration}s to run #{data["filename"]}"
         progress.file_progress(tests, failures, failed, data["text"])
         formatter.print_progress
+
+      when "retry"
+        burndown.retry(data["on"], data["framework"], data["filename"])
+        say "#{data["on"]} Re-running #{data["filename"]}"
+
+      when "starting"
+        debug "#{data["on"]} Starting framework #{data["framework"]}"
+        burndown.next_file(data["on"], data["framework"], nil)
+
+      when "started"
+        debug "#{data["on"]} Started framework #{data["framework"]}"
+        burndown.result(data["on"], data["framework"], nil, 0, 0, false)
 
       when "error"
         say_lines(data["text"], "#{data["on"]} [ERROR for #{data["process"]}] ")
@@ -150,9 +171,6 @@ protected
       when "stderr"
         say "#{data["on"]} [STDERR for #{data["process"]}]"
         say data["text"]
-
-      when "retry"
-        say "#{data["on"]} Re-running #{data["filename"]}"
 
       when "slave_configuration"
         slave_details = slave.slave_details_by_server.fetch(channel)
