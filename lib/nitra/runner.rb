@@ -81,13 +81,13 @@ class Nitra::Runner
 
   def hand_out_files_to_workers
     while !$aborted && workers.length > 0
-      Nitra::Channel.read_select(worker_pipes + [server_channel]).each do |worker_channel|
+      Nitra::Channel.read_select(worker_pipes + [server_channel]).each do |channel|
 
         # This is our back-channel that lets us know in case the master is dead.
-        kill_workers if worker_channel == server_channel && server_channel.rd.eof?
+        kill_workers if channel == server_channel && server_channel.rd.eof?
 
-        unless data = worker_channel.read
-          worker_number, worker_hash = workers.find {|number, hash| hash[:pipe] == worker_channel}
+        unless data = channel.read
+          worker_number, worker_hash = workers.find {|number, hash| hash[:pipe] == channel}
           workers.delete worker_number
           debug "Worker #{worker_number} unexpectedly died."
           next
@@ -101,7 +101,7 @@ class Nitra::Runner
           handle_result(data)
 
         when "next_file"
-          handle_next_file(data, worker_channel)
+          handle_next_file(data, channel)
 
         else
           raise "Unrecognised nitra command to runner #{data["command"]}"
