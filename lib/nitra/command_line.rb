@@ -62,6 +62,10 @@ module Nitra
           configuration.add_slave connection_command
         end
 
+        opts.on("--split-files", "Split test files and run the scenarios in parallel") do
+          configuration.split_files = true
+        end
+
         opts.on("-e", "--environment ENV", String, "Set the RAILS_ENV to load") do |env|
           configuration.environment = env
         end

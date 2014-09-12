@@ -35,39 +35,54 @@ module Nitra::Workers
     # Run a Cucumber file.
     #
     def run_file(filename, preloading = false)
-      cuke_config = ::Cucumber::Cli::Configuration.new(io, io)
-      cuke_config.parse!(["--no-color", "--require", "features", filename])
-      cuke_runtime.configure(cuke_config)
+      if configuration.split_files && !preloading && !filename.include?(':')
+        run_with_arguments("--no-color", "--require", "features", "--dry-run", filename)
+        scenarios = cuke_runtime.scenarios.collect {|scenario| "#{scenario.location.file}:#{scenario.location.line}"}
 
-      cuke_runtime.run!
-
-      if cuke_runtime.results.failure? && @configuration.exceptions_to_retry && @attempt < @configuration.max_attempts &&
-         cuke_runtime.results.scenarios(:failed).any? {|scenario| scenario.exception.to_s =~ @configuration.exceptions_to_retry}
-        raise RetryException
-      end
-
-      if m = io.string.match(/(\d+) scenarios?.+$/)
-        test_count = m[1].to_i
-        if m = io.string.match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
-          failure_count = m[1].to_i
-        else
-          failure_count = 0
-        end
+        {
+          "failed"        => false,
+          "test_count"    => 0,
+          "failure_count" => 0,
+          "parts_to_run"  => scenarios,
+        }
       else
-        test_count = failure_count = 0
-      end
+        run_with_arguments("--no-color", "--require", "features", filename)
 
-      {
-        "failed"        => cuke_runtime.results.failure?,
-        "test_count"    => test_count,
-        "failure_count" => failure_count,
-      }
+        if cuke_runtime.results.failure? && @configuration.exceptions_to_retry && @attempt < @configuration.max_attempts &&
+           cuke_runtime.results.scenarios(:failed).any? {|scenario| scenario.exception.to_s =~ @configuration.exceptions_to_retry}
+          raise RetryException
+        end
+
+        if m = io.string.match(/(\d+) scenarios?.+$/)
+          test_count = m[1].to_i
+          if m = io.string.match(/\d+ scenarios? \(.*(\d+) [failed|undefined].*\)/)
+            failure_count = m[1].to_i
+          else
+            failure_count = 0
+          end
+        else
+          test_count = failure_count = 0
+        end
+
+        {
+          "failed"        => cuke_runtime.results.failure?,
+          "test_count"    => test_count,
+          "failure_count" => failure_count,
+        }
+      end
     end
 
     def clean_up
       super
 
       cuke_runtime.reset
+    end
+
+    def run_with_arguments(*args)
+      cuke_config = ::Cucumber::Cli::Configuration.new(io, io)
+      cuke_config.parse!(args)
+      cuke_runtime.configure(cuke_config)
+      cuke_runtime.run!
     end
   end
 end
