@@ -130,12 +130,12 @@ protected
       when "result"
         tests = data["test_count"] || 0
         failures = data["failure_count"] || 0
-        failed = data["failed"]
+        failure = data["failure"]
         parts_to_run = data["parts_to_run"]
 
-        duration = burndown.result(data["on"], data["framework"], data["filename"], tests, failures, failed)
+        duration = burndown.result(data["on"], data["framework"], data["filename"], tests, failures, failure)
         debug "#{data["on"]} took #{'%0.2f' % duration}s to #{parts_to_run ? 'split' : 'run'} #{data["filename"]}"
-        progress.file_progress(tests, failures, failed, data["text"])
+        progress.file_progress(tests, failures, failure, data["text"])
         formatter.print_progress
 
         if parts_to_run

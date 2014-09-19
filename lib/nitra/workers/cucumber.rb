@@ -40,9 +40,9 @@ module Nitra::Workers
         scenarios = cuke_runtime.scenarios.collect {|scenario| "#{scenario.location.file}:#{scenario.location.line}"}
 
         {
-          "failed"        => false,
           "test_count"    => 0,
           "failure_count" => 0,
+          "failure"       => false,
           "parts_to_run"  => scenarios,
         }
       else
@@ -65,9 +65,9 @@ module Nitra::Workers
         end
 
         {
-          "failed"        => cuke_runtime.results.failure?,
           "test_count"    => test_count,
           "failure_count" => failure_count,
+          "failure"       => cuke_runtime.results.failure?,
         }
       end
     end

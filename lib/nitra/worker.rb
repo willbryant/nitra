@@ -195,13 +195,13 @@ module Nitra
 
       def run_file_and_handle_errors(filename)
         result = run_file(filename)
-        result["failed"] ||= result["failure_count"] > 0
+        result["failure"] ||= result["failure_count"] > 0
         channel.write result.merge({
           "command"   => "result",
           "framework" => self.class.framework_name,
           "filename"  => filename,
           "on"        => on,
-          "text"      => result["failed"] ? io.string : "",
+          "text"      => result["failure"] ? io.string : "",
         })
 
       rescue RetryException
@@ -222,7 +222,7 @@ module Nitra
           "framework" => self.class.framework_name,
           "filename"  => filename,
           "on"        => on,
-          "failed"    => true,
+          "failure"   => true,
           "text"      => io.string,
         })
       end

@@ -49,12 +49,12 @@ class Nitra::Burndown
     )
   end
 
-  def result(on_worker, framework, file, tests, failures, failed)
+  def result(on_worker, framework, file, tests, failures, failure)
     result = worker_result(on_worker, file)
     result[:end_time] = Time.now - @started_at
     result[:tests] = tests
     result[:failures] = failures
-    result[:failed] = failed
+    result[:failure] = failure
     result.duration
   end
 

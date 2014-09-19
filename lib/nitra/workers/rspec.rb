@@ -34,9 +34,9 @@ module Nitra::Workers
     #
     def run_file(filename, preloading = false)
       runner = runner_for(filename)
-      failed = runner.run(io, io).to_i != 0
+      failure = runner.run(io, io).to_i != 0
 
-      if failed && @configuration.exceptions_to_retry && @attempt < @configuration.max_attempts &&
+      if failure && @configuration.exceptions_to_retry && @attempt < @configuration.max_attempts &&
          io.string =~ @configuration.exceptions_to_retry
         raise RetryException
       end
@@ -49,7 +49,7 @@ module Nitra::Workers
       end
 
       {
-        "failed"        => failed,
+        "failure"       => failure,
         "test_count"    => test_count,
         "failure_count" => failure_count,
       }
