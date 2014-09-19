@@ -15,7 +15,7 @@ class Nitra::Burndown
 
     def short_label
       result = (filename ? filename_without_path : framework).tr('<>&', '_')
-      result << " (#{'%0.2f' % duration}s): "
+      result << " (#{'%0.2f' % duration}s)"
       result
     end
 
