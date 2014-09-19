@@ -66,7 +66,8 @@ class Nitra::Runner
 
   def start_workers
     (1..configuration.process_count).collect do |index|
-      start_worker(index, configuration.frameworks.first)
+      framework = configuration.start_mixture ? configuration.frameworks[index % configuration.frameworks.size] : configuration.frameworks.first
+      start_worker(index, framework)
     end
   end
 

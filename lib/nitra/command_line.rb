@@ -66,6 +66,10 @@ module Nitra
           configuration.split_files = true
         end
 
+        opts.on("--start-mixture", "Start a mixture of workers of each framework.  The default is to start all workers on the first framework.") do
+          configuration.start_mixture = true
+        end
+
         opts.on("-e", "--environment ENV", String, "Set the RAILS_ENV to load") do |env|
           configuration.environment = env
         end
