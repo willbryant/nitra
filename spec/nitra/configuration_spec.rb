@@ -35,20 +35,6 @@ describe Nitra::Configuration do
     end
   end
 
-  describe "#set_default_framework" do
-    it "sets the default framework to the first one in the list" do
-      config.add_framework 'rspec'
-      config.add_framework 'cucumber'
-      config.set_default_framework
-      config.framework.must_equal 'rspec'
-    end
-
-    it "does nothing when there's no frameworks" do
-      config.set_default_framework
-      config.framework.must_be_nil
-    end
-  end
-
   # We want slaves to inherit all config except for process count.
   # This needs refactoring to not be so frickin retardedk.
   it "does interesting things with slave process configs" do

@@ -5,7 +5,7 @@ require_relative '../../lib/nitra/command_line'
 
 describe Nitra::CommandLine do
 
-  let(:config){ m = MiniTest::Mock.new; m.expect(:set_default_framework, []); m}
+  let(:config){ m = MiniTest::Mock.new }
 
   describe "option parsing" do
     describe "-c" do

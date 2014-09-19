@@ -3,7 +3,7 @@ require 'nitra/utils'
 module Nitra
   class Configuration
     attr_accessor :debug, :quiet, :print_failures, :burndown_report, :rake_tasks, :split_files, :exceptions_to_retry, :max_attempts
-    attr_accessor :process_count, :environment, :slaves, :slave_mode, :framework, :frameworks
+    attr_accessor :process_count, :environment, :slaves, :slave_mode, :frameworks
 
     def initialize
       self.environment = "test"
@@ -24,10 +24,6 @@ module Nitra
 
     def add_slave(command)
       slaves << {:command => command, :cpus => nil}
-    end
-
-    def set_default_framework
-      self.framework = frameworks.first if frameworks.any?
     end
 
     def calculate_default_process_count

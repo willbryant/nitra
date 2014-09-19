@@ -1,14 +1,13 @@
 require 'stringio'
 
 class Nitra::Runner
-  attr_reader :configuration, :server_channel, :runner_id, :current_framework, :workers, :tasks
+  attr_reader :configuration, :server_channel, :runner_id, :workers, :tasks
 
   def initialize(configuration, server_channel, runner_id)
     ENV["RAILS_ENV"] = configuration.environment
 
     @workers           = {}
     @runner_id         = runner_id
-    @current_framework = configuration.framework
     @configuration     = configuration
     @server_channel    = server_channel
     @tasks             = Nitra::Tasks.new(self)
@@ -67,12 +66,12 @@ class Nitra::Runner
 
   def start_workers
     (1..configuration.process_count).collect do |index|
-      start_worker(index)
+      start_worker(index, configuration.frameworks.first)
     end
   end
 
-  def start_worker(index)
-    pid, channel = Nitra::Workers::Worker.worker_classes[current_framework].new(runner_id, index, configuration).fork_and_run
+  def start_worker(index, framework)
+    pid, channel = Nitra::Workers::Worker.worker_classes[framework].new(runner_id, index, configuration).fork_and_run
     workers[index] = {:pid => pid, :channel => channel}
   end
 
@@ -114,9 +113,8 @@ class Nitra::Runner
       close_worker(worker_number, worker_channel)
 
     when "framework"
-      @current_framework = data["framework"]
       close_worker(worker_number, worker_channel)
-      start_worker(worker_number)
+      start_worker(worker_number, data["framework"])
 
     when "process_file"
       worker_channel.write data

@@ -1,16 +1,13 @@
 class Nitra::Master
-  attr_reader :configuration, :files, :frameworks, :current_framework
+  attr_reader :configuration, :files_by_framework
 
   def initialize(configuration, files = nil)
     @configuration = configuration
-    @frameworks = configuration.frameworks
-    if @frameworks.any?
+    if configuration.frameworks.any?
       load_files_from_framework_list
     else
       map_files_to_frameworks(files)
     end
-    @current_framework = @frameworks.shift
-    @configuration.framework = @current_framework
   end
 
   def run
@@ -88,50 +85,46 @@ protected
   end
 
   def map_files_to_frameworks(files)
-    @files = files.group_by do |filename|
+    @files_by_framework = files.group_by do |filename|
      framework_name, framework_class = Nitra::Workers::Worker.worker_classes.find {|framework_name, framework_class| framework_class.filename_match?(filename)}
      framework_name
     end
-    @frameworks = @files.keys
   end
 
   def load_files_from_framework_list
-    @files = frameworks.inject({}) do |result, framework_name|
-      result[framework_name] = Nitra::Workers::Worker.worker_classes[framework_name].files
+    @files_by_framework = configuration.frameworks.inject({}) do |result, framework_name|
+      files = Nitra::Workers::Worker.worker_classes[framework_name].files
+      result[framework_name] = files unless files.empty?
       result
     end
   end
 
   def files_remaining
-    files.values.inject(0) {|sum, filenames| sum + filenames.length}
-  end
-
-  def current_framework_files
-    files[current_framework]
-  end
-
-  def next_file
-    raise if files_remaining == 0
-    file = current_framework_files.shift
-    @current_framework = frameworks.shift if current_framework_files.length == 0
-    file
+    files_by_framework.values.inject(0) {|sum, filenames| sum + filenames.length}
   end
 
   def process_channel(channel)
     if data = channel.read
       case data["command"]
       when "next_file"
-        if files_remaining == 0
-          debug "#{data["on"]} Finished with this worker"
-          channel.write "command" => "drain"
-        elsif data["framework"] == current_framework
-          file = next_file
-          burndown.next_file(data["on"], data["framework"], file)
+        framework = data["framework"]
+
+        if files_by_framework[framework]
+          file = files_by_framework[framework].shift
+          files_by_framework.delete(framework) if files_by_framework[framework].empty?
+
+          burndown.next_file(data["on"], framework, file)
           debug "#{data["on"]} Assigning #{file}"
           channel.write "command" => "process_file", "filename" => file
+
+        elsif files_by_framework.empty?
+          debug "#{data["on"]} Finished with this worker"
+          channel.write "command" => "drain"
+
         else
-          debug "#{data["on"]} Restarting worker with framework #{current_framework}"
-          channel.write "command" => "framework", "framework" => current_framework
+          framework = files_by_framework.keys.first
+          debug "#{data["on"]} Restarting worker with framework #{framework}"
+          channel.write "command" => "framework", "framework" => framework
         end
 
       when "result"
@@ -139,6 +132,7 @@ protected
         failures = data["failure_count"] || 0
         failed = data["failed"]
         parts_to_run = data["parts_to_run"]
+
         duration = burndown.result(data["on"], data["framework"], data["filename"], tests, failures, failed)
         debug "#{data["on"]} took #{'%0.2f' % duration}s to #{parts_to_run ? 'split' : 'run'} #{data["filename"]}"
         progress.file_progress(tests, failures, failed, data["text"])
@@ -146,7 +140,7 @@ protected
 
         if parts_to_run
           debug "#{data["on"]} split #{data["filename"]} into #{parts_to_run.join '+'}"
-          files[data["framework"]].concat(parts_to_run) if parts_to_run
+          files_by_framework[data["framework"]].concat(parts_to_run) if parts_to_run
           progress.file_count += parts_to_run.size
         end
 
