@@ -68,7 +68,7 @@ class Nitra::Runner
     (1..configuration.process_count).collect do |index|
       framework = configuration.start_framework || configuration.frameworks[index % configuration.frameworks.size]
       start_worker(index, framework)
-    end
+    end if configuration.frameworks.size > 0
   end
 
   def start_worker(index, framework)
