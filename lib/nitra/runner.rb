@@ -55,6 +55,7 @@ class Nitra::Runner
     ENV["TEST_ENV_NUMBER"] = "1"
 
     output = Nitra::Utils.capture_output do
+      require 'bundler/setup'
       require './config/application'
       Rails.application.require_environment!
       ActiveRecord::Base.connection.disconnect!
