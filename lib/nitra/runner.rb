@@ -36,6 +36,7 @@ class Nitra::Runner
     kill_workers
   rescue Errno::EPIPE
   ensure
+    server_channel.close rescue nil
     trap("SIGTERM", "DEFAULT")
     trap("SIGINT", "DEFAULT")
   end
