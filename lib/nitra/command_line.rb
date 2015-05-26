@@ -18,7 +18,10 @@ module Nitra
           configuration.set_process_count n
         end
 
-        opts.on("--cucumber [PATTERN1, PATTERN2]", Array, "Add full cucumber run, causes any files you list manually to be ignored") do |patterns|
+        opts.on("--cucumber [PATTERN1,PATTERN2]", Array,
+                "Full cucumber run, causes any files you list manually to be ignored.",
+                "Default pattern is \"features/**/*.feature\"."
+               ) do |patterns|
           configuration.add_framework("cucumber", patterns || ["features/**/*.feature"])
         end
 
@@ -50,7 +53,10 @@ module Nitra
           configuration.add_rake_task(:before_worker, "db:reset")
         end
 
-        opts.on("--rspec [PATTERN1, PATTERN2]", Array, "Add full rspec run, causes any files you list manually to be ignored") do |patterns|
+        opts.on("--rspec [PATTERN1,PATTERN2]", Array,
+                "Full rspec run, causes any files you list manually to be ignored.",
+                "Default pattern is \"spec/**/*_spec.rb\"."
+               ) do |patterns|
           configuration.add_framework("rspec", patterns || ["spec/**/*_spec.rb"])
         end
 

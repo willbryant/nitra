@@ -14,7 +14,9 @@ Nitra is a multi-process, optionally multi-server rspec and cucumber runner that
 ## Usage
       nitra [options] [spec_filename [...]]
           -c, --cpus NUMBER                Specify the number of CPUs to use on the host, or if specified after a --slave, on the slave
-              --cucumber                   Add full cucumber run, causes any files you list manually to be ignored
+              --cucumber [PATTERN1,PATTERN2]
+                                           Full cucumber run, causes any files you list manually to be ignored.
+                                           Default pattern is "features/**/*.feature".
               --debug                      Print debug output
           -p, --print-failures             Print failures immediately when they occur
           -q, --quiet                      Quiet; don't display progress bar
@@ -28,7 +30,9 @@ Nitra is a multi-process, optionally multi-server rspec and cucumber runner that
                                            Reset database, equivalent to --rake-before-worker db:reset
               --slave-mode                 Run in slave mode; ignores all other command-line options
               --slave CONNECTION_COMMAND   Provide a command that executes "nitra --slave-mode" on another host
-              --rspec                      Add full rspec run, causes any files you list manually to be ignored
+              --rspec [PATTERN1,PATTERN2]  Full rspec run, causes any files you list manually to be ignored.
+                                           Default pattern is "spec/**/*_spec.rb".
+              --slave-mode                 Run in slave mode; ignores all other command-line options
           -e, --environment ENV            Set the RAILS_ENV to load
           -h, --help                       Show this message
 
