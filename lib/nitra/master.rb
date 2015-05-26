@@ -7,7 +7,7 @@ class Nitra::Master
       load_files_from_framework_list
     else
       map_files_to_frameworks(files)
-      @configuration.frameworks = files_by_framework.keys
+      @configuration.frameworks = files_by_framework
     end
   end
 
@@ -93,8 +93,8 @@ protected
   end
 
   def load_files_from_framework_list
-    @files_by_framework = configuration.frameworks.inject({}) do |result, framework_name|
-      files = Nitra::Workers::Worker.worker_classes[framework_name].files
+    @files_by_framework = configuration.frameworks.inject({}) do |result, (framework_name, framework_patterns)|
+      files = Nitra::Workers::Worker.worker_classes[framework_name].files(framework_patterns)
       result[framework_name] = files unless files.empty?
       result
     end

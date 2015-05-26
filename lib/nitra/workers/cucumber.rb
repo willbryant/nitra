@@ -1,9 +1,5 @@
 module Nitra::Workers
   class Cucumber < Worker
-    def self.files
-      Dir["features/**/*.feature"].sort_by {|f| File.size(f)}.reverse
-    end
-
     def self.filename_match?(filename)
       filename =~ /\.feature/
     end
