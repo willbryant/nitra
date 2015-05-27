@@ -9,13 +9,13 @@ module Nitra
       self.environment = "test"
       self.slaves = []
       self.rake_tasks = {}
-      self.frameworks = []
+      self.frameworks = {}
       self.max_attempts = 5
       calculate_default_process_count
     end
 
-    def add_framework(framework)
-      frameworks << framework
+    def add_framework(framework, patterns)
+      frameworks[framework] = patterns
     end
 
     def add_rake_task(name, list)

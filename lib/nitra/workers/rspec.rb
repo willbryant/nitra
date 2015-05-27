@@ -1,9 +1,5 @@
 module Nitra::Workers
   class Rspec < Worker
-    def self.files
-      Dir["spec/**/*_spec.rb"].sort_by {|f| File.size(f)}.reverse
-    end
-
     def self.filename_match?(filename)
       filename =~ /_spec\.rb/
     end

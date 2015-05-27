@@ -22,6 +22,10 @@ module Nitra
         def framework_name
           self.name.split("::").last.downcase
         end
+
+        def files(patterns)
+          Dir[*patterns].sort_by {|f| File.size(f)}.reverse
+        end
       end
 
       class RetryException < Exception; end
