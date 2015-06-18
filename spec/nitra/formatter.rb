@@ -1,8 +1,6 @@
 $LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__) + '/../../lib')
-gem 'minitest'
+require_relative '../spec_helper.rb'
 require 'ostruct'
-require 'minitest/spec'
-require 'minitest/autorun'
 require 'nitra/formatter'
 require 'nitra/progress'
 require 'nitra/configuration'

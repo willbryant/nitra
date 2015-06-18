@@ -1,8 +1,7 @@
-gem 'minitest'
-require 'minitest/spec'
-require 'minitest/autorun'
+require_relative '../spec_helper.rb'
+
 require 'ostruct'
-require '../../lib/tasks.rb'
+require_relative '../../lib/nitra/tasks'
 
 # Tasks needs an overhaul - it should just run stuff and report back, not talk to channels.
 # describe Nitra::Tasks do
