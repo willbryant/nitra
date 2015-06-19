@@ -17,9 +17,6 @@ module Nitra::Workers
       <<-EOS
       Feature: cucumber preloading
         Scenario: a fake scenario
-          Given every step is unimplemented
-          When we run this file
-          Then Cucumber will load it's environment
       EOS
     end
 
@@ -44,7 +41,7 @@ module Nitra::Workers
       else
         run_with_arguments("--no-color", "--require", "features", filename)
 
-        if cuke_runtime.results.failure? && @configuration.exceptions_to_retry && @attempt && @attempt < @configuration.max_attempts &&
+        if cuke_runtime.failure? && @configuration.exceptions_to_retry && @attempt && @attempt < @configuration.max_attempts &&
            cuke_runtime.results.scenarios(:failed).any? {|scenario| scenario.exception.to_s =~ @configuration.exceptions_to_retry}
           raise RetryException
         end
@@ -63,7 +60,7 @@ module Nitra::Workers
         {
           "test_count"    => test_count,
           "failure_count" => failure_count,
-          "failure"       => cuke_runtime.results.failure?,
+          "failure"       => cuke_runtime.failure?,
         }
       end
     end
