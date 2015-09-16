@@ -1,22 +1,21 @@
-gem 'minitest'
-require 'minitest/spec'
-require 'minitest/autorun'
+$LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__) + '/../../lib')
+require_relative '../spec_helper.rb'
 require_relative '../../lib/nitra/configuration'
 
 describe Nitra::Configuration do
   let(:config){ Nitra::Configuration.new }
   it "has default values" do
     config.slaves.must_equal []
-    config.frameworks.must_equal []
-    config.rake_tasks.must_equal Hash.new;
+    config.frameworks.must_equal Hash.new
+    config.rake_tasks.must_equal Hash.new
     config.process_count.must_equal Nitra::Utils.processor_count
   end
 
   describe "#add_framework" do
     it "adds a framework to frameworks" do
-      config.add_framework("cucumber")
-      config.add_framework("rspec")
-      config.frameworks.must_equal ["cucumber", "rspec"]
+      config.add_framework("cucumber", :patterns)
+      config.add_framework("rspec", :patterns)
+      config.frameworks.must_equal({"cucumber" => :patterns, "rspec" => :patterns})
     end
   end
 

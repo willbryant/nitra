@@ -18,5 +18,8 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('cucumber', '>= 1.1.9')
   s.add_dependency('rspec')
 
+  s.add_development_dependency 'minitest'
+  s.add_development_dependency 'minitest-reporters'
+
   s.has_rdoc = false
 end

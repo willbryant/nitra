@@ -4,9 +4,8 @@ module Cucumber
   module RbSupport
     class RbLanguage
       # Reloading support files is bad for us. Idealy we'd subclass but since
-      # Cucumber's internals are a bit shit and insists on using the new keyword
-      # everywhere we have to monkeypatch it out or spend another 6 months
-      # rewriting it and getting patches accepted...
+      # Cucumber's internals insists on using the new keyword
+      # everywhere we have to monkeypatch it out
       def load_code_file(code_file)
         require File.expand_path(code_file)
       end
@@ -16,8 +15,25 @@ module Cucumber
     # Cucumber lacks a reset hook like the one Rspec has so we need to patch one in...
     # Call this after configure so that the correct configuration is used to create the result set.
     def reset
-      @results = Results.new(@configuration)
-      @loader = nil
+      if defined?(Formatter::LegacyApi::Results)
+        @filespecs = nil
+        @features = nil
+        @report = nil
+        @summary_report = nil
+        @formatters = nil
+        @results = Formatter::LegacyApi::Results.new
+      else
+        @results = Results.new(@configuration)
+        @loader = nil
+      end
+    end
+
+    def failure?
+      if defined?(super)
+        super
+      else
+        results.failure?
+      end
     end
   end
 end

@@ -1,6 +1,4 @@
-gem 'minitest'
-require 'minitest/spec'
-require 'minitest/autorun'
+require_relative '../spec_helper.rb'
 require_relative '../../lib/nitra/channel'
 
 describe Nitra::Channel do
