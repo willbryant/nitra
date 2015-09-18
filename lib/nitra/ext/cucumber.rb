@@ -35,5 +35,13 @@ module Cucumber
         results.failure?
       end
     end
+
+    def scenarios(*args)
+      if defined?(Formatter::LegacyApi::Results)
+        report.runtime.find {|r| r.is_a? Formatter::LegacyApi::Adapter}.results.scenarios
+      else
+        super
+      end
+    end
   end
 end
