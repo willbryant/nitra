@@ -98,7 +98,7 @@ module Nitra
         end
       end.parse!(argv)
 
-      puts "You should use the --rspec and/or --cucumber options to run some tests." if configuration.frameworks.empty? && !configuration.slave_mode
+      puts "You should use the --rspec and/or --cucumber options to run some tests." if ARGV.empty? && configuration.frameworks.empty? && !configuration.slave_mode
     end
   end
 end
