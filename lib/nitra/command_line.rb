@@ -82,7 +82,7 @@ module Nitra
 
         opts.on("--retry EXCEPTION", String, "Retry tests that fail with the given exception, which can be a plain string or a /regex/.") do |exception|
           if exception[0] == '/' && exception[-1] == '/'
-            configuration.exceptions_to_retry = Regexp.new(exception)
+            configuration.exceptions_to_retry = Regexp.new(exception[1..-2])
           else
             configuration.exceptions_to_retry = Regexp.new(Regexp.escape(exception))
           end
