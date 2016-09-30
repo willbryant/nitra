@@ -136,6 +136,7 @@ protected
 
         duration = burndown.result(data["on"], data["framework"], data["filename"], tests, failures, failure)
         debug "#{data["on"]} took #{'%0.2f' % duration}s to #{parts_to_run ? 'split' : 'run'} #{data["filename"]}"
+        debug "#{data["on"]} PID #{data["pid"]} RSS grew #{data["memory_growth"]}Mb from #{data["memory_before"]}Mb to #{data["memory_before"] + data["memory_growth"]}Mb #{parts_to_run ? 'splitting' : 'running'} #{data["filename"]}" if data["memory_growth"]
         progress.file_progress(tests, failures, failure, data["text"])
         formatter.print_progress
 

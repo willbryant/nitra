@@ -197,8 +197,24 @@ module Nitra
         channel.write("command" => "stderr", "process" => filename, "text" => stderr_text, "on" => on) if !stderr_text.empty?
       end
 
-      def run_file_and_handle_errors(filename)
+      def result_and_memory_growth(filename)
+        # add the rusage gem to your bundle to get memory stats in your debug output
+        rusage_before = Process.rusage if Process.respond_to?(:rusage)
         result = run_file(filename)
+        rusage_after = Process.rusage if Process.respond_to?(:rusage)
+
+        if rusage_before && rusage_after
+          one_megabyte = RUBY_PLATFORM =~ /darwin/ ? 1024*1024 : 1024 # despite the OS X man page saying this is kilobytes, it's actually bytes
+          result["memory_before"] = rusage_before.maxrss/one_megabyte
+          result["memory_growth"] = (rusage_after.maxrss - rusage_before.maxrss)/one_megabyte
+        end
+
+        result["pid"] = Process.pid
+        result
+      end
+
+      def run_file_and_handle_errors(filename)
+        result = result_and_memory_growth(filename)
         result["failure"] ||= result["failure_count"] > 0
         channel.write result.merge({
           "command"   => "result",
