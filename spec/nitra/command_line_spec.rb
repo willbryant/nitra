@@ -149,8 +149,6 @@ describe Nitra::CommandLine do
     it "parses out options and leavs only files in list" do
       argv = ['--slave','the slave command','this_test_file_spec.rb']
       config.expect(:add_slave, nil, ['the slave command'])
-      config.expect(:frameworks, {})
-      config.expect(:slave_mode, false)
       Nitra::CommandLine.new(config, argv)
       config.verify
       argv.must_equal ['this_test_file_spec.rb']
