@@ -30,13 +30,12 @@ module Nitra::Workers
     def run_file(filename, preloading = false)
       if configuration.split_files && !preloading && !filename.include?(':')
         run_with_arguments("--no-color", "--require", "features", "--dry-run", filename)
-        scenarios = cuke_runtime.scenarios.collect {|scenario| "#{scenario.location.file}:#{scenario.location.line}"}
 
         {
           "test_count"    => 0,
           "failure_count" => 0,
           "failure"       => false,
-          "parts_to_run"  => scenarios,
+          "parts_to_run"  => runnable_parts,
         }
       else
         run_with_arguments("--no-color", "--require", "features", filename)
@@ -76,6 +75,13 @@ module Nitra::Workers
       cuke_config.parse!(args)
       cuke_runtime.configure(cuke_config)
       cuke_runtime.run!
+    end
+
+    def runnable_parts
+      scenarios, example_rows = cuke_runtime.scenarios.partition { |scenario| scenario.respond_to?(:location) }
+      outlines = example_rows.map(&:scenario_outline)
+
+      (outlines + scenarios).map { |runnable| "#{runnable.location.file}:#{runnable.location.line}" }.uniq
     end
   end
 end

@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name = 'nitra'
-  s.version = '1.0.0'
+  s.version = '1.0.1'
   s.platform = Gem::Platform::RUBY
   s.license = "MIT"
   s.homepage = "http://github.com/powershop/nitra"
@@ -18,6 +18,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('cucumber', '>= 1.1.9')
   s.add_dependency('rspec')
 
+  s.add_development_dependency 'rake'
   s.add_development_dependency 'minitest'
   s.add_development_dependency 'minitest-reporters'
 
