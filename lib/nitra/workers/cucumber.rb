@@ -15,6 +15,7 @@ module Nitra::Workers
 
     def minimal_file
       <<-EOS
+      @nitra_preloading
       Feature: cucumber preloading
         Scenario: a fake scenario
       EOS
