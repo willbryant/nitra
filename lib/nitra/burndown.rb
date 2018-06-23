@@ -2,7 +2,7 @@ require 'ostruct'
 require 'erb'
 
 class Nitra::Burndown
-  attr_accessor :runners, :started_at, :finished_at
+  attr_accessor :runners, :started_at, :finished_at, :all_results
 
   class Result < OpenStruct
     def filename_without_path
@@ -33,6 +33,7 @@ class Nitra::Burndown
 
   def initialize
     @runners = {}
+    @all_results = []
   end
 
   def start
@@ -55,6 +56,7 @@ class Nitra::Burndown
     result[:tests] = tests
     result[:failures] = failures
     result[:failure] = failure
+    @all_results << result
     result.duration
   end
 
